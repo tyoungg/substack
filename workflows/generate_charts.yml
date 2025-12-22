@@ -1,0 +1,35 @@
+name: Weekly Chart Generation
+
+on:
+  schedule:
+    - cron: '0 12 * * 6'  # Saturdays at 12:00 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Generate charts
+        run: |
+          python generate_charts.py
+
+      - name: Commit updated charts
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add charts/*.png
+          git commit -m "Weekly chart update" || echo "No changes"
+          git push
