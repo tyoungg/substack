@@ -22,40 +22,35 @@ def find_trendline_points(df):
     return idx_low, idx_low + 1
 
 for symbol in symbols:
-    df = yf.download(
+    df_raw = yf.download(
         symbol,
         period="1y",
         interval="1d",
         auto_adjust=False,
         progress=False
+    ).dropna()
+    
+    # --- Build a brand-new, mplfinance-safe dataframe ---
+    clean_df = pd.DataFrame(
+        {
+            "Open":  df_raw["Open"].to_numpy(dtype="float64"),
+            "High":  df_raw["High"].to_numpy(dtype="float64"),
+            "Low":   df_raw["Low"].to_numpy(dtype="float64"),
+            "Close": df_raw["Close"].to_numpy(dtype="float64"),
+        },
+        index=pd.to_datetime(df_raw.index)
     )
     
-    df = df.dropna()
-    
-    # --- Rebuild OHLC dataframe to guarantee float dtypes ---
-    ohlc = df[["Open", "High", "Low", "Close"]].to_numpy(dtype=float)
-    
-    clean_df = mpf.make_marketcolors(up='g', down='r')
-    clean_df = df.copy()
-    
-    for col in ["Open", "High", "Low", "Close"]:
-        clean_df[col] = clean_df[col].to_numpy(dtype=float)
-    
-    # --- Trendline logic ---
+    # --- Trendline logic (pure numpy) ---
     closes = clean_df["Close"].to_numpy()
     i1 = closes.argmin()
     
-    i2 = None
-    for i in range(i1 + 5, len(closes)):
-        if closes[i] > closes[i1]:
-            i2 = i
-            break
+    i2 = next(
+        (i for i in range(i1 + 5, len(closes)) if closes[i] > closes[i1]),
+        i1 + 1
+    )
     
-    if i2 is None:
-        i2 = i1 + 1
-    
-    x = np.arange(len(closes), dtype=float)
-    
+    x = np.arange(len(closes), dtype="float64")
     y1 = closes[i1]
     y2 = closes[i2]
     
@@ -74,3 +69,4 @@ for symbol in symbols:
         savefig=f"charts/{symbol}_1y.png",
         tight_layout=True
     )
+
