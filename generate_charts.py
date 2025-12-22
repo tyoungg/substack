@@ -381,7 +381,7 @@ for symbol in symbols:
         detector.detect_head_shoulders(),
         detector.detect_double_top_bottom(),
         detector.detect_triangle(),
-        detector.detect_flag_pennant()
+        detector.detect_flag_pennant(),
         detector.detect_cup_handle(),        # New!
         detector.detect_price_channels()     # New!
     ]
