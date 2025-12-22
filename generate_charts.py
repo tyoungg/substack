@@ -14,12 +14,12 @@ with open("symbols.yaml", "r") as f:
 os.makedirs("charts", exist_ok=True)
 
 # ----------------------------
-# Helper: find trendline points
+# Trendline helper
 # ----------------------------
 def find_trendline_points(closes):
     i1 = int(np.argmin(closes))
-    i2 = None
 
+    i2 = None
     for i in range(i1 + 5, len(closes)):
         if closes[i] > closes[i1]:
             i2 = i
@@ -34,7 +34,7 @@ def find_trendline_points(closes):
 # Main loop
 # ----------------------------
 for symbol in symbols:
-    df_raw = yf.download(
+    df = yf.download(
         symbol,
         period="1y",
         interval="1d",
@@ -42,23 +42,27 @@ for symbol in symbols:
         progress=False,
     )
 
-    df_raw = df_raw.dropna()
+    df = df.dropna()
 
-    # --- Build a CLEAN mplfinance dataframe (1D float arrays only) ---
+    # 🔑 CRITICAL FIX: flatten MultiIndex columns
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    # Build mplfinance-safe DataFrame (guaranteed 1-D floats)
     clean_df = pd.DataFrame(
         {
-            "Open":  df_raw["Open"].values.astype("float64"),
-            "High":  df_raw["High"].values.astype("float64"),
-            "Low":   df_raw["Low"].values.astype("float64"),
-            "Close": df_raw["Close"].values.astype("float64"),
+            "Open":  df["Open"].to_numpy().astype("float64").ravel(),
+            "High":  df["High"].to_numpy().astype("float64").ravel(),
+            "Low":   df["Low"].to_numpy().astype("float64").ravel(),
+            "Close": df["Close"].to_numpy().astype("float64").ravel(),
         },
-        index=pd.to_datetime(df_raw.index)
+        index=pd.to_datetime(df.index)
     )
 
     # ----------------------------
-    # Trendline (pure numpy)
+    # Trendline (pure NumPy)
     # ----------------------------
-    closes = clean_df["Close"].values
+    closes = clean_df["Close"].to_numpy()
     i1, i2 = find_trendline_points(closes)
 
     x = np.arange(len(closes), dtype="float64")
@@ -68,7 +72,7 @@ for symbol in symbols:
     slope = (y2 - y1) / (i2 - i1)
     trendline = y1 + slope * (x - i1)
 
-    add_plot = mpf.make_addplot(trendline, color="black", width=2)
+    ap = mpf.make_addplot(trendline, color="black", width=2)
 
     # ----------------------------
     # Plot
@@ -77,7 +81,7 @@ for symbol in symbols:
         clean_df,
         type="candle",
         style="yahoo",
-        addplot=add_plot,
+        addplot=ap,
         title=f"{symbol} — 1 Year Daily Chart",
         figsize=(16, 9),
         savefig=f"charts/{symbol}_1y.png",
