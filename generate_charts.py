@@ -62,17 +62,17 @@ for symbol in symbols:
     # ----------------------------
     # Trendline (pure NumPy)
     # ----------------------------
-    closes = clean_df["Close"].to_numpy()
-    i1, i2 = find_trendline_points(closes)
+    # closes = clean_df["Close"].to_numpy()
+    # i1, i2 = find_trendline_points(closes)
 
-    x = np.arange(len(closes), dtype="float64")
-    y1 = closes[i1]
-    y2 = closes[i2]
+    # x = np.arange(len(closes), dtype="float64")
+    # y1 = closes[i1]
+    # y2 = closes[i2]
 
-    slope = (y2 - y1) / (i2 - i1)
-    trendline = y1 + slope * (x - i1)
+    # slope = (y2 - y1) / (i2 - i1)
+    # trendline = y1 + slope * (x - i1)
 
-    ap = mpf.make_addplot(trendline, color="black", width=2)
+    # ap = mpf.make_addplot(trendline, color="black", width=2)
 
     # ----------------------------
     # Plot
@@ -81,7 +81,7 @@ for symbol in symbols:
         clean_df,
         type="candle",
         style="yahoo",
-        addplot=ap,
+ #       addplot=ap,
         title=f"{symbol} — 1 Year Daily Chart",
         figsize=(16, 9),
         savefig=f"charts/{symbol}_1y.png",
