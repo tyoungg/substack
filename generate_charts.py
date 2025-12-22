@@ -22,8 +22,7 @@ def find_trendline_points(df):
     return idx_low, idx_low + 1
 
 for symbol in symbols:
-#    df = yf.download(symbol, period="1y", interval="1d")
-    df = yf.download(
+df = yf.download(
     symbol,
     period="1y",
     interval="1d",
@@ -31,41 +30,47 @@ for symbol in symbols:
     progress=False
 )
 
-    df.dropna(inplace=True)
-    # Ensure mplfinance-compatible dtypes
-    for col in ["Open", "High", "Low", "Close"]:
-        df[col] = df[col].astype(float)
+df = df.dropna()
 
+# --- Rebuild OHLC dataframe to guarantee float dtypes ---
+ohlc = df[["Open", "High", "Low", "Close"]].to_numpy(dtype=float)
 
-    i1, i2 = find_trendline_points(df)
+clean_df = mpf.make_marketcolors(up='g', down='r')
+clean_df = df.copy()
 
-#    x = np.arange(len(df))
-#    y1 = df["Close"].iloc[i1]
-#    y2 = df["Close"].iloc[i2]
-#    slope = (y2 - y1) / (i2 - i1)
-#    trendline = y1 + slope * (x - i1)
+for col in ["Open", "High", "Low", "Close"]:
+    clean_df[col] = clean_df[col].to_numpy(dtype=float)
 
-    # --- Trendline calculation (robust numpy-only math) ---
-    x = np.arange(len(df), dtype=float)
+# --- Trendline logic ---
+closes = clean_df["Close"].to_numpy()
+i1 = closes.argmin()
 
-#    y1 = float(df["Close"].iloc[i1])
-#    y2 = float(df["Close"].iloc[i2])
-    y1 = df["Close"].iloc[i1].item()
-    y2 = df["Close"].iloc[i2].item()
+i2 = None
+for i in range(i1 + 5, len(closes)):
+    if closes[i] > closes[i1]:
+        i2 = i
+        break
 
-    slope = (y2 - y1) / float(i2 - i1)
-    trendline = y1 + slope * (x - float(i1))
+if i2 is None:
+    i2 = i1 + 1
 
+x = np.arange(len(closes), dtype=float)
 
-    add_plot = mpf.make_addplot(trendline, color="black", width=2)
+y1 = closes[i1]
+y2 = closes[i2]
 
-    mpf.plot(
-        df,
-        type="candle",
-        style="yahoo",
-        addplot=add_plot,
-        title=f"{symbol} — 1 Year Daily Chart",
-        figsize=(16, 9),
-        savefig=f"charts/{symbol}_1y.png",
-        tight_layout=True
-    )
+slope = (y2 - y1) / (i2 - i1)
+trendline = y1 + slope * (x - i1)
+
+ap = mpf.make_addplot(trendline, color="black", width=2)
+
+mpf.plot(
+    clean_df,
+    type="candle",
+    style="yahoo",
+    addplot=ap,
+    title=f"{symbol} — 1 Year Daily Chart",
+    figsize=(16, 9),
+    savefig=f"charts/{symbol}_1y.png",
+    tight_layout=True
+)
