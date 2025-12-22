@@ -403,9 +403,9 @@ for symbol in symbols:
         detector.detect_flag_pennant(),
         detector.detect_cup_handle(),        # New!
         detector.detect_price_channels(
-            min_touches=3, 
-            parallel_tolerance=0.02, 
-            lookback_period=90  # Only look at last 60 days)     # New!
+            min_touches=6, 
+            parallel_tolerance=0.01, 
+            lookback_period=60  # Only look at last 60 days)     # New!
     ]
     
     # Print detected patterns
