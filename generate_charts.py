@@ -16,7 +16,9 @@ class PatternDetector:
         self.closes = df['Close'].values
         self.highs = df['High'].values
         self.lows = df['Low'].values
-        self.volume = df.get('Volume', np.ones(len(df))).values
+        # Fix: Use numpy array directly
+        self.volume = df.get('Volume', pd.Series(np.ones(len(df)), index=df.index)).values  
+
         
     def find_peaks_troughs(self, prominence=0.02):
         """Find significant peaks and troughs"""
