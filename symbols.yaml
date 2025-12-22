@@ -1,7 +1,7 @@
 symbols:
-  - DJIA
-  - TRAN
-  - UTIL
-  - SPX
-  - COMPQ
+  - ^DJI
+  - ^DJY
+  - ^DJU
+  - ^GSPC
+  - ^IXIC
   - IWM
