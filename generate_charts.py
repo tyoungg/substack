@@ -27,11 +27,20 @@ for symbol in symbols:
 
     i1, i2 = find_trendline_points(df)
 
-    x = np.arange(len(df))
-    y1 = df["Close"].iloc[i1]
-    y2 = df["Close"].iloc[i2]
-    slope = (y2 - y1) / (i2 - i1)
-    trendline = y1 + slope * (x - i1)
+#    x = np.arange(len(df))
+#    y1 = df["Close"].iloc[i1]
+#    y2 = df["Close"].iloc[i2]
+#    slope = (y2 - y1) / (i2 - i1)
+#    trendline = y1 + slope * (x - i1)
+
+    # --- Trendline calculation (robust numpy-only math) ---
+    x = np.arange(len(df), dtype=float)
+
+    y1 = float(df["Close"].iloc[i1])
+    y2 = float(df["Close"].iloc[i2])
+    slope = (y2 - y1) / float(i2 - i1)
+    trendline = y1 + slope * (x - float(i1))
+
 
     add_plot = mpf.make_addplot(trendline, color="black", width=2)
 
