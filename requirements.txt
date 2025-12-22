@@ -4,3 +4,5 @@ numpy
 matplotlib
 mplfinance
 pyyaml
+scipy
+sklearn
