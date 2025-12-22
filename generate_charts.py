@@ -202,12 +202,30 @@ class PatternDetector:
         
         return None
     
-    def detect_price_channels(self, min_touches=3, parallel_tolerance=0.02):
-        """Detect Price Channels (parallel trendlines)"""
-        peaks, troughs = self.find_peaks_troughs(prominence=0.015)
+    def detect_price_channels(self, min_touches=3, parallel_tolerance=0.02, lookback_period=60):
+        """Detect Price Channels focusing on recent data"""
+        # Only look at recent data
+        start_idx = max(0, len(self.closes) - lookback_period)
+        recent_closes = self.closes[start_idx:]
+        recent_highs = self.highs[start_idx:]
+        recent_lows = self.lows[start_idx:]
+        
+        # Create temporary detector for recent data
+        recent_df = self.df.iloc[start_idx:].copy()
+        temp_detector = PatternDetector.__new__(PatternDetector)
+        temp_detector.closes = recent_closes
+        temp_detector.highs = recent_highs
+        temp_detector.lows = recent_lows
+        
+        # Find peaks and troughs in recent data only
+        peaks, troughs = temp_detector.find_peaks_troughs(prominence=0.015)
         
         if len(peaks) < min_touches or len(troughs) < min_touches:
             return None
+        
+        # Adjust indices back to original dataframe
+        peaks = peaks + start_idx
+        troughs = troughs + start_idx
         
         # Try different combinations of peaks for upper trendline
         for i in range(len(peaks) - min_touches + 1):
@@ -237,7 +255,7 @@ class PatternDetector:
                     channel_width = upper_level - lower_level
                     
                     # Classify channel direction
-                    if abs(upper_slope) < 0.01:  # Nearly horizontal
+                    if abs(upper_slope) < 0.01:
                         channel_type = 'horizontal_channel'
                     elif upper_slope > 0:
                         channel_type = 'ascending_channel'
@@ -253,8 +271,9 @@ class PatternDetector:
                         'lower_slope': lower_slope,
                         'lower_intercept': lower_intercept,
                         'channel_width': channel_width,
-                        'start_idx': min(upper_points[0], lower_points[0]),
-                        'end_idx': max(upper_points[-1], lower_points[-1])
+                        'start_idx': max(min(upper_points[0], lower_points[0]), start_idx),
+                        'end_idx': max(upper_points[-1], lower_points[-1]),
+                        'lookback_start': start_idx  # Track where we started looking
                     }
         
         return None
@@ -383,7 +402,10 @@ for symbol in symbols:
         detector.detect_triangle(),
         detector.detect_flag_pennant(),
         detector.detect_cup_handle(),        # New!
-        detector.detect_price_channels()     # New!
+        detector.detect_price_channels(
+            min_touches=3, 
+            parallel_tolerance=0.02, 
+            lookback_period=90  # Only look at last 60 days)     # New!
     ]
     
     # Print detected patterns
