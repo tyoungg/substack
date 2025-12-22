@@ -22,8 +22,20 @@ def find_trendline_points(df):
     return idx_low, idx_low + 1
 
 for symbol in symbols:
-    df = yf.download(symbol, period="1y", interval="1d")
+#    df = yf.download(symbol, period="1y", interval="1d")
+    df = yf.download(
+    symbol,
+    period="1y",
+    interval="1d",
+    auto_adjust=False,
+    progress=False
+)
+
     df.dropna(inplace=True)
+    # Ensure mplfinance-compatible dtypes
+    for col in ["Open", "High", "Low", "Close"]:
+        df[col] = df[col].astype(float)
+
 
     i1, i2 = find_trendline_points(df)
 
@@ -36,8 +48,11 @@ for symbol in symbols:
     # --- Trendline calculation (robust numpy-only math) ---
     x = np.arange(len(df), dtype=float)
 
-    y1 = float(df["Close"].iloc[i1])
-    y2 = float(df["Close"].iloc[i2])
+#    y1 = float(df["Close"].iloc[i1])
+#    y2 = float(df["Close"].iloc[i2])
+    y1 = df["Close"].iloc[i1].item()
+    y2 = df["Close"].iloc[i2].item()
+
     slope = (y2 - y1) / float(i2 - i1)
     trendline = y1 + slope * (x - float(i1))
 
