@@ -321,7 +321,6 @@ class PatternDetector:
 # def customize_date_axis(ax, clean_df):
     """Customize x-axis using actual data dates"""
     # Get unique months from the actual data
-    data_months = clean_df.index.to_period('M').unique().sort_values()
     
     # Create tick positions at the start of each month that has data
     tick_positions = []
