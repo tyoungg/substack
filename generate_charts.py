@@ -318,29 +318,50 @@ class PatternDetector:
 # ----------------------------
 # Date axis customization 
 # ----------------------------
+# ----------------------------
+# Date axis customization - PROPERLY SPACED
+# ----------------------------
 def customize_date_axis(ax, clean_df):
     """Customize x-axis to show year for January, month abbreviations for others"""
-    # Get the actual year from the dataframe
-    actual_year = clean_df.index[0].year
+    # Get the actual date range from the dataframe
+    start_date = clean_df.index[0]
+    end_date = clean_df.index[-1]
+    actual_year = start_date.year
     
-    # Set major ticks to months
-    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    # Generate monthly ticks for the entire data range
+    # Make sure to include the last month even if it's partial
+    first_month = start_date.replace(day=1)
+    last_month = end_date.replace(day=1)
     
-    # Custom formatter using the actual year from data
-    def custom_date_formatter(x, pos):
-        try:
-            date = mdates.num2date(x)
-            if date.month == 1:  # January - show actual year
-                return str(actual_year)
-            else:  # Other months - show abbreviated month
-                return date.strftime('%b')
-        except:
-            return ''
+    # Add one month to ensure we capture the final month
+    if last_month.month == 12:
+        next_year_jan = last_month.replace(year=last_month.year + 1, month=1)
+        monthly_dates = pd.date_range(start=first_month, end=next_year_jan, freq='MS')[:-1]
+    else:
+        next_month = last_month.replace(month=last_month.month + 1)
+        monthly_dates = pd.date_range(start=first_month, end=next_month, freq='MS')[:-1]
     
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
+    # Force all ticks to show (disable auto-thinning)
+    ax.set_xticks(monthly_dates)
+    ax.tick_params(axis='x', which='major', labelbottom=True)
     
-    # Keep labels horizontal and centered
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha='center')
+    # Custom labels: year for January, month abbreviation for others
+    labels = []
+    for date in monthly_dates:
+        if date.month == 1:  # January - show actual year
+            labels.append(str(actual_year))
+        else:  # Other months - show abbreviated month
+            labels.append(date.strftime('%b'))
+    
+    # Force all labels to show
+    ax.set_xticklabels(labels, rotation=0, ha='center')
+    
+    # Prevent matplotlib from auto-adjusting ticks
+    ax.xaxis.set_major_locator(ticker.FixedLocator(monthly_dates))
+    ax.xaxis.set_major_formatter(ticker.FixedFormatter(labels))
+    
+    # Ensure the axis shows the full data range
+    ax.set_xlim(start_date, end_date)
 # ----------------------------
 # Simple plotting function for charts without patterns
 # ----------------------------
