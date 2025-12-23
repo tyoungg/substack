@@ -316,22 +316,22 @@ class PatternDetector:
         return None
 
 # ----------------------------
-# Date axis customization - SIMPLE FIX
+# Date axis customization 
 # ----------------------------
-def customize_date_axis(ax):
+def customize_date_axis(ax, clean_df):
     """Customize x-axis to show year for January, month abbreviations for others"""
-    # Don't mess with limits - let mplfinance handle that
-    # Just customize the tick formatting
+    # Get the actual year from the dataframe
+    actual_year = clean_df.index[0].year
     
     # Set major ticks to months
     ax.xaxis.set_major_locator(mdates.MonthLocator())
     
-    # Custom formatter: show year for January, month abbreviation for others
+    # Custom formatter using the actual year from data
     def custom_date_formatter(x, pos):
         try:
             date = mdates.num2date(x)
-            if date.month == 1:  # January - show year
-                return date.strftime('%Y')
+            if date.month == 1:  # January - show actual year
+                return str(actual_year)
             else:  # Other months - show abbreviated month
                 return date.strftime('%b')
         except:
@@ -357,8 +357,8 @@ def plot_simple_chart(clean_df, symbol, company_name):
     )
     
     # Customize x-axis to show years for January, months for others
-#    customize_date_axis(axes[0], clean_df)
-    customize_date_axis(axes[0])
+    customize_date_axis(axes[0], clean_df)
+#    customize_date_axis(axes[0])
 
     # Save the figure
     fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
@@ -531,8 +531,8 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     )
     
     # Customize x-axis BEFORE adding legend
-#    customize_date_axis(axes[0], clean_df)
-    customize_date_axis(axes[0])
+    customize_date_axis(axes[0], clean_df)
+#    customize_date_axis(axes[0])
     
     # Add legend only if patterns were detected - SEMI-TRANSPARENT OVERLAY
     if legend_items:
