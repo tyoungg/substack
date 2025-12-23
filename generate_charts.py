@@ -341,6 +341,30 @@ class PatternDetector:
 #     ax.set_xticks(tick_positions)
 #     ax.set_xticklabels(tick_labels)
 
+def customize_date_axis(ax):
+    """Minimal date formatting - don't touch positioning"""
+    # Get the existing tick labels that mplfinance already set up correctly
+    labels = ax.get_xticklabels()
+    
+    # Only change the text of existing labels, don't add/remove any
+    new_labels = []
+    for label in labels:
+        try:
+            # Get the date from the label's position
+            date_num = label.get_position()[0]
+            date = mdates.num2date(date_num)
+            
+            if date.month == 1:
+                new_labels.append(str(date.year))
+            else:
+                new_labels.append(date.strftime('%b'))
+        except:
+            # If anything fails, keep the original label
+            new_labels.append(label.get_text())
+    
+    # Replace labels but keep all the positioning that mplfinance set up
+    ax.set_xticklabels(new_labels)
+
 
 # ----------------------------
 # Simple plotting function for charts without patterns
