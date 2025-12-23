@@ -575,11 +575,11 @@ for symbol in symbols:
         ]
         
         # Plot with patterns (saves as symbol_1y_patterns.png)
-        legend_items = plot_with_patterns_and_legend(clean_df, symbol, patterns)
+        legend_items = plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns)
     else:
         # Plot simple chart (saves as symbol_1y.png)
-        plot_simple_chart(clean_df, symbol)
+        plot_simple_chart(clean_df, symbol, company_name)
         print(f"{symbol}: Simple chart generated")
     
     # Plot with patterns and legend (only for detected patterns)
-    legend_items = plot_with_patterns_and_legend(clean_df, symbol, patterns)
+ #   legend_items = plot_with_patterns_and_legend(clean_df, symbol, patterns)
