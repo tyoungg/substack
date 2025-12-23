@@ -18,6 +18,29 @@ with open("symbols.yaml", "r") as f:
     enable_patterns = config.get("enable_patterns", False)
 
 os.makedirs("charts", exist_ok=True)
+
+# ----------------------------
+# Helper function to get company name
+# ----------------------------
+def get_company_name(symbol):
+    """Get company name from yfinance, fallback to symbol if unavailable"""
+    try:
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        
+        # Try different name fields in order of preference
+        company_name = (
+            info.get('longName') or 
+            info.get('shortName') or 
+            info.get('name') or 
+            symbol
+        )
+        return company_name
+    except:
+        return symbol
+
+
+
 # ----------------------------
 # Enhanced Pattern Detection
 # ----------------------------
@@ -301,7 +324,8 @@ def plot_simple_chart(clean_df, symbol):
         clean_df,
         type="candle",
         style="yahoo",
-        title=f"{symbol} — 1 Year Daily Chart",
+#        title=f"{symbol} — 1 Year Daily Chart",
+        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",        
         figsize=(16, 9),
         savefig=f"charts/{symbol}_1y.png",
         tight_layout=True,
@@ -440,7 +464,8 @@ def plot_with_patterns_and_legend(clean_df, symbol, patterns):
         type="candle",
         style="yahoo",
         addplot=addplots if addplots else None,
-        title=f"{symbol} — 1 Year Daily Chart",
+#        title=f"{symbol} — 1 Year Daily Chart",
+        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
         figsize=(16, 9),
         returnfig=True,  # This returns the figure so we can add legend
         tight_layout=True,
@@ -479,6 +504,12 @@ def plot_with_patterns_and_legend(clean_df, symbol, patterns):
 # Main loop with dynamic filenames
 # ----------------------------
 for symbol in symbols:
+    print(f"Processing {symbol}...")
+    
+    # Get company name
+    company_name = get_company_name(symbol)
+    print(f"Company: {company_name}")
+    
     df = yf.download(
         symbol,
         period="1y",
