@@ -318,28 +318,28 @@ class PatternDetector:
 # ----------------------------
 # Date axis customization 
 # ----------------------------
-def customize_date_axis(ax, clean_df):
-    """Customize x-axis using actual data dates"""
-    # Get unique months from the actual data
-    data_months = clean_df.index.to_period('M').unique().sort_values()
-    
-    # Create tick positions at the start of each month that has data
-    tick_positions = []
-    tick_labels = []
-    
-    for month_period in data_months:
-        # Convert back to timestamp for positioning
-        month_start = month_period.start_time
-        tick_positions.append(month_start)
-        
-        # Label format: year for January, month abbreviation for others
-        if month_start.month == 1:
-            tick_labels.append(str(month_start.year))
-        else:
-            tick_labels.append(month_start.strftime('%b'))
-    
-    ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels)
+# def customize_date_axis(ax, clean_df):
+#     """Customize x-axis using actual data dates"""
+#     # Get unique months from the actual data
+#     data_months = clean_df.index.to_period('M').unique().sort_values()
+#     
+#     # Create tick positions at the start of each month that has data
+#     tick_positions = []
+#     tick_labels = []
+#     
+#     for month_period in data_months:
+#         # Convert back to timestamp for positioning
+#         month_start = month_period.start_time
+#         tick_positions.append(month_start)
+#         
+#         # Label format: year for January, month abbreviation for others
+#         if month_start.month == 1:
+#             tick_labels.append(str(month_start.year))
+#         else:
+#             tick_labels.append(month_start.strftime('%b'))
+#     
+#     ax.set_xticks(tick_positions)
+#     ax.set_xticklabels(tick_labels)
 
 
 # ----------------------------
@@ -358,8 +358,8 @@ def plot_simple_chart(clean_df, symbol, company_name):
     )
     
     # Customize x-axis to show years for January, months for others
-    customize_date_axis(axes[0], clean_df)
-#    customize_date_axis(axes[0])
+#    customize_date_axis(axes[0], clean_df)
+    customize_date_axis(axes[0])
 
     # Save the figure
     fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
@@ -532,8 +532,8 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     )
     
     # Customize x-axis BEFORE adding legend
-    customize_date_axis(axes[0], clean_df)
-#    customize_date_axis(axes[0])
+#    customize_date_axis(axes[0], clean_df)
+    customize_date_axis(axes[0])
     
     # Add legend only if patterns were detected - SEMI-TRANSPARENT OVERLAY
     if legend_items:
