@@ -318,50 +318,39 @@ class PatternDetector:
 # ----------------------------
 # Date axis customization 
 # ----------------------------
-# ----------------------------
-# Date axis customization - PROPERLY SPACED
-# ----------------------------
+
 def customize_date_axis(ax, clean_df):
     """Customize x-axis to show year for January, month abbreviations for others"""
     # Get the actual date range from the dataframe
     start_date = clean_df.index[0]
     end_date = clean_df.index[-1]
-    actual_year = start_date.year
     
-    # Generate monthly ticks for the entire data range
-    # Make sure to include the last month even if it's partial
+    # Generate monthly ticks for the entire data range (INCLUSIVE of end month)
     first_month = start_date.replace(day=1)
     last_month = end_date.replace(day=1)
     
-    # Add one month to ensure we capture the final month
-    if last_month.month == 12:
-        next_year_jan = last_month.replace(year=last_month.year + 1, month=1)
-        monthly_dates = pd.date_range(start=first_month, end=next_year_jan, freq='MS')[:-1]
-    else:
-        next_month = last_month.replace(month=last_month.month + 1)
-        monthly_dates = pd.date_range(start=first_month, end=next_month, freq='MS')[:-1]
+    # Generate ALL months from start through end (no slicing off the end!)
+    monthly_dates = pd.date_range(start=first_month, end=last_month, freq='MS')
     
-    # Force all ticks to show (disable auto-thinning)
-    ax.set_xticks(monthly_dates)
-    ax.tick_params(axis='x', which='major', labelbottom=True)
+    # Convert to matplotlib dates for positioning
+    monthly_mpl_dates = [mdates.date2num(date) for date in monthly_dates]
     
     # Custom labels: year for January, month abbreviation for others
     labels = []
     for date in monthly_dates:
-        if date.month == 1:  # January - show actual year
-            labels.append(str(actual_year))
+        if date.month == 1:  # January - show the ACTUAL year of that January
+            labels.append(str(date.year))  # Use date.year, not start_date.year!
         else:  # Other months - show abbreviated month
             labels.append(date.strftime('%b'))
     
-    # Force all labels to show
+    # Set explicit ticks and labels
+    ax.set_xticks(monthly_mpl_dates)
     ax.set_xticklabels(labels, rotation=0, ha='center')
     
-    # Prevent matplotlib from auto-adjusting ticks
-    ax.xaxis.set_major_locator(ticker.FixedLocator(monthly_dates))
-    ax.xaxis.set_major_formatter(ticker.FixedFormatter(labels))
-    
-    # Ensure the axis shows the full data range
+    # Ensure full data range is visible
     ax.set_xlim(start_date, end_date)
+
+
 # ----------------------------
 # Simple plotting function for charts without patterns
 # ----------------------------
