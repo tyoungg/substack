@@ -315,30 +315,38 @@ class PatternDetector:
         
         return None
 
+# ----------------------------  
+# Date axis customization - ROBUST VERSION
 # ----------------------------
-# Date axis customization
-# ----------------------------
-def customize_date_axis(ax):
+def customize_date_axis(ax, clean_df):
     """Customize x-axis to show year for January, month abbreviations for others"""
-    # Set major ticks to months
-    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    # Get actual date range from the dataframe
+    start_date = clean_df.index[0]
+    end_date = clean_df.index[-1]
     
-    # Custom formatter: show year for January, month abbreviation for others
-    def custom_date_formatter(x, pos):
-        date = mdates.num2date(x)
+    # Set axis limits to actual data range
+    ax.set_xlim(start_date, end_date)
+    
+    # Create monthly ticks within the data range
+    months = pd.date_range(start=start_date.replace(day=1), 
+                          end=end_date, 
+                          freq='MS')  # Month Start frequency
+    
+    # Set major ticks to these monthly dates
+    ax.set_xticks(months)
+    
+    # Custom labels: year for January, month abbreviation for others
+    labels = []
+    for date in months:
         if date.month == 1:  # January - show year
-            return date.strftime('%Y')
+            labels.append(date.strftime('%Y'))
         else:  # Other months - show abbreviated month
-            return date.strftime('%b')
+            labels.append(date.strftime('%b'))
     
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
+    ax.set_xticklabels(labels, rotation=0, ha='center')
     
-    # Rotate labels slightly for better readability
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha='center')
-    
-    # Optional: Add minor ticks for better granularity
-    ax.xaxis.set_minor_locator(mdates.WeekdayLocator())
-
+    # Add minor ticks for better granularity
+    ax.xaxis.set_minor_locator(mdates.WeekdayLocator(interval=2))
 # ----------------------------
 # Simple plotting function for charts without patterns
 # ----------------------------
@@ -355,8 +363,8 @@ def plot_simple_chart(clean_df, symbol, company_name):
     )
     
     # Customize x-axis to show years for January, months for others
-    customize_date_axis(axes[0])
-    
+    customize_date_axis(axes[0], clean_df)
+
     # Save the figure
     fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
     plt.close(fig)
@@ -528,7 +536,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     )
     
     # Customize x-axis BEFORE adding legend
-    customize_date_axis(axes[0])
+    customize_date_axis(axes[0], clean_df)
     
     # Add legend only if patterns were detected - SEMI-TRANSPARENT OVERLAY
     if legend_items:
