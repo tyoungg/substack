@@ -319,26 +319,26 @@ class PatternDetector:
 # Date axis customization 
 # ----------------------------
 # def customize_date_axis(ax, clean_df):
-    """Customize x-axis using actual data dates"""
+#    """Customize x-axis using actual data dates"""
     # Get unique months from the actual data
     
     # Create tick positions at the start of each month that has data
-    tick_positions = []
-    tick_labels = []
+#    tick_positions = []
+#    tick_labels = []
     
-    for month_period in data_months:
+#    for month_period in data_months:
         # Convert back to timestamp for positioning
-        month_start = month_period.start_time
-        tick_positions.append(month_start)
+#        month_start = month_period.start_time
+#        tick_positions.append(month_start)
         
         # Label format: year for January, month abbreviation for others
-        if month_start.month == 1:
-            tick_labels.append(str(month_start.year))
-        else:
-            tick_labels.append(month_start.strftime('%b'))
+#        if month_start.month == 1:
+#            tick_labels.append(str(month_start.year))
+#        else:
+#            tick_labels.append(month_start.strftime('%b'))
     
-    ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels)
+#    ax.set_xticks(tick_positions)
+#    ax.set_xticklabels(tick_labels)
 
 # ----------------------------
 # Simple plotting function for charts without patterns
