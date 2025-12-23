@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from scipy.signal import find_peaks, find_peaks_cwt
 from sklearn.linear_model import LinearRegression
+import matplotlib.dates as mdates
+from datetime import datetime
 
 # ----------------------------
 # Load symbols and config
@@ -316,11 +318,38 @@ class PatternDetector:
 
 
 # ----------------------------
+# Customize axis
+# ----------------------------
+
+
+def customize_date_axis(ax):
+    """Customize x-axis to show year for January, month abbreviations for others"""
+    # Set major ticks to months
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    
+    # Custom formatter: show year for January, month abbreviation for others
+    def custom_date_formatter(x, pos):
+        date = mdates.num2date(x)
+        if date.month == 1:  # January - show year
+            return date.strftime('%Y')
+        else:  # Other months - show abbreviated month
+            return date.strftime('%b')
+    
+    ax.xaxis.set_major_formatter(mdates.FuncFormatter(custom_date_formatter))
+    
+    # Rotate labels slightly for better readability
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha='center')
+    
+    # Optional: Add minor ticks for better granularity
+    ax.xaxis.set_minor_locator(mdates.WeekdayLocator())
+
+
+# ----------------------------
 # Simple plotting function for charts without patterns
 # ----------------------------
 def plot_simple_chart(clean_df, symbol):
     """Plot clean chart without patterns"""
-    mpf.plot(
+    fig, axes = mpf.plot(
         clean_df,
         type="candle",
         style="yahoo",
@@ -496,6 +525,10 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
         returnfig=True,
         tight_layout=True,
     )
+
+    # Customize x-axis BEFORE adding legend
+    customize_date_axis(axes[0])
+
     
     # Add legend only if patterns were detected - BETTER POSITION
     if legend_items:
@@ -523,7 +556,11 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
         print(f"{symbol}: No patterns detected")
     
     # Save with patterns filename
-    fig.savefig(f"charts/{symbol}_1y_patterns.png", dpi=300, bbox_inches='tight')
+    # Customize x-axis to show years for January, months for others
+    customize_date_axis(axes[0])
+    
+    # Save the figure
+    fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
     plt.close(fig)
     
     return legend_items
