@@ -6,10 +6,11 @@ import yfinance as yf
 import mplfinance as mpf
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
+from datetime import datetime
 from scipy.signal import find_peaks, find_peaks_cwt
 from sklearn.linear_model import LinearRegression
-import matplotlib.dates as mdates
-from datetime import datetime
 
 # ----------------------------
 # Load symbols and config
@@ -40,8 +41,6 @@ def get_company_name(symbol):
         return company_name
     except:
         return symbol
-
-
 
 # ----------------------------
 # Enhanced Pattern Detection
@@ -316,12 +315,9 @@ class PatternDetector:
         
         return None
 
-
 # ----------------------------
-# Customize axis
+# Date axis customization
 # ----------------------------
-
-
 def customize_date_axis(ax):
     """Customize x-axis to show year for January, month abbreviations for others"""
     # Set major ticks to months
@@ -335,7 +331,7 @@ def customize_date_axis(ax):
         else:  # Other months - show abbreviated month
             return date.strftime('%b')
     
-    ax.xaxis.set_major_formatter(mdates.FuncFormatter(custom_date_formatter))
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(custom_date_formatter))
     
     # Rotate labels slightly for better readability
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha='center')
@@ -343,28 +339,33 @@ def customize_date_axis(ax):
     # Optional: Add minor ticks for better granularity
     ax.xaxis.set_minor_locator(mdates.WeekdayLocator())
 
-
 # ----------------------------
 # Simple plotting function for charts without patterns
 # ----------------------------
-def plot_simple_chart(clean_df, symbol):
-    """Plot clean chart without patterns"""
+def plot_simple_chart(clean_df, symbol, company_name):
+    """Plot clean chart without patterns with custom x-axis"""
     fig, axes = mpf.plot(
         clean_df,
         type="candle",
         style="yahoo",
-#        title=f"{symbol} — 1 Year Daily Chart",
-        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",        
+        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
         figsize=(16, 9),
-        savefig=f"charts/{symbol}_1y.png",
+        returnfig=True,
         tight_layout=True,
     )
+    
+    # Customize x-axis to show years for January, months for others
+    customize_date_axis(axes[0])
+    
+    # Save the figure
+    fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
+    plt.close(fig)
 
 # ----------------------------
-# Plotting with legend on chart
+# Plotting with patterns and legend
 # ----------------------------
 def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
-    """Plot chart with colored pattern lines and better positioned legend"""
+    """Plot chart with colored pattern lines and custom x-axis"""
     addplots = []
     legend_items = []
     legend_colors = []
@@ -513,7 +514,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
             channel_name = pattern['type'].replace('_', ' ').title()
             legend_items.append(channel_name)
             legend_colors.append('cyan')
-    
+
     # Create plot without saving yet
     fig, axes = mpf.plot(
         clean_df,
@@ -522,31 +523,30 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
         addplot=addplots if addplots else None,
         title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
         figsize=(16, 9),
-        returnfig=True,
+        returnfig=True,  # This returns the figure so we can add legend
         tight_layout=True,
     )
-
+    
     # Customize x-axis BEFORE adding legend
     customize_date_axis(axes[0])
-
     
-    # Add legend only if patterns were detected - BETTER POSITION
+    # Add legend only if patterns were detected - SEMI-TRANSPARENT OVERLAY
     if legend_items:
         # Create legend patches
         legend_patches = []
         for item, color in zip(legend_items, legend_colors):
             legend_patches.append(mpatches.Patch(color=color, label=item))
         
-        # Position legend in lower left to avoid blocking price data
+        # Semi-transparent overlay - data shows through
         axes[0].legend(
             handles=legend_patches, 
-            loc='lower left',  # Changed from 'upper left' 
-            bbox_to_anchor=(0.02, 0.02),  # Lower left corner
+            loc='upper left',
+            bbox_to_anchor=(0.02, 0.98),
             frameon=True,
             fancybox=True,
-            shadow=False,
+            shadow=False,        # No shadow for cleaner look
             fontsize=9,
-            framealpha=0.65, # Semi-transparent background
+            framealpha=0.7,      # Semi-transparent background
             edgecolor='gray',    # Subtle border
             facecolor='white'    # White background with transparency
         )
@@ -556,16 +556,13 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
         print(f"{symbol}: No patterns detected")
     
     # Save with patterns filename
-    # Customize x-axis to show years for January, months for others
-    customize_date_axis(axes[0])
-    
-    # Save the figure
-    fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
-    plt.close(fig)
+    fig.savefig(f"charts/{symbol}_1y_patterns.png", dpi=300, bbox_inches='tight')
+    plt.close(fig)  # Close to free memory
     
     return legend_items
+
 # ----------------------------
-# Main loop with dynamic filenames
+# Main loop
 # ----------------------------
 for symbol in symbols:
     print(f"Processing {symbol}...")
@@ -587,7 +584,7 @@ for symbol in symbols:
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     
-    # Build mplfinance-safe DataFrame
+    # Build mplfinance-safe DataFrame (guaranteed 1-D floats)
     clean_df = pd.DataFrame(
         {
             "Open":  df["Open"].to_numpy().astype("float64").ravel(),
@@ -611,12 +608,9 @@ for symbol in symbols:
             detector.detect_price_channels()
         ]
         
-        # Plot with patterns (saves as symbol_1y_patterns.png)
+        # Plot with patterns and company name - FIXED: Added company_name parameter
         legend_items = plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns)
     else:
-        # Plot simple chart (saves as symbol_1y.png)
+        # Plot simple chart with company name
         plot_simple_chart(clean_df, symbol, company_name)
         print(f"{symbol}: Simple chart generated")
-    
-    # Plot with patterns and legend (only for detected patterns)
- #   legend_items = plot_with_patterns_and_legend(clean_df, symbol, patterns)
