@@ -318,37 +318,28 @@ class PatternDetector:
 # ----------------------------
 # Date axis customization 
 # ----------------------------
-
 def customize_date_axis(ax, clean_df):
-    """Customize x-axis to show year for January, month abbreviations for others"""
-    # Get the actual date range from the dataframe
-    start_date = clean_df.index[0]
-    end_date = clean_df.index[-1]
+    """Customize x-axis using actual data dates"""
+    # Get unique months from the actual data
+    data_months = clean_df.index.to_period('M').unique().sort_values()
     
-    # Generate monthly ticks for the entire data range (INCLUSIVE of end month)
-    first_month = start_date.replace(day=1)
-    last_month = end_date.replace(day=1)
+    # Create tick positions at the start of each month that has data
+    tick_positions = []
+    tick_labels = []
     
-    # Generate ALL months from start through end (no slicing off the end!)
-    monthly_dates = pd.date_range(start=first_month, end=last_month, freq='MS')
+    for month_period in data_months:
+        # Convert back to timestamp for positioning
+        month_start = month_period.start_time
+        tick_positions.append(month_start)
+        
+        # Label format: year for January, month abbreviation for others
+        if month_start.month == 1:
+            tick_labels.append(str(month_start.year))
+        else:
+            tick_labels.append(month_start.strftime('%b'))
     
-    # Convert to matplotlib dates for positioning
-    monthly_mpl_dates = [mdates.date2num(date) for date in monthly_dates]
-    
-    # Custom labels: year for January, month abbreviation for others
-    labels = []
-    for date in monthly_dates:
-        if date.month == 1:  # January - show the ACTUAL year of that January
-            labels.append(str(date.year))  # Use date.year, not start_date.year!
-        else:  # Other months - show abbreviated month
-            labels.append(date.strftime('%b'))
-    
-    # Set explicit ticks and labels
-    ax.set_xticks(monthly_mpl_dates)
-    ax.set_xticklabels(labels, rotation=0, ha='center')
-    
-    # Ensure full data range is visible
-    ax.set_xlim(start_date, end_date)
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(tick_labels)
 
 
 # ----------------------------
