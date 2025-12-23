@@ -10,12 +10,14 @@ from scipy.signal import find_peaks, find_peaks_cwt
 from sklearn.linear_model import LinearRegression
 
 # ----------------------------
-# Load symbols
+# Load symbols and config
 # ----------------------------
 with open("symbols.yaml", "r") as f:
-    symbols = yaml.safe_load(f)["symbols"]
-os.makedirs("charts", exist_ok=True)
+    config = yaml.safe_load(f)
+    symbols = config["symbols"]
+    enable_patterns = config.get("enable_patterns", False)
 
+os.makedirs("charts", exist_ok=True)
 # ----------------------------
 # Enhanced Pattern Detection
 # ----------------------------
@@ -289,6 +291,22 @@ class PatternDetector:
         
         return None
 
+
+# ----------------------------
+# Simple plotting function for charts without patterns
+# ----------------------------
+def plot_simple_chart(clean_df, symbol):
+    """Plot clean chart without patterns"""
+    mpf.plot(
+        clean_df,
+        type="candle",
+        style="yahoo",
+        title=f"{symbol} — 1 Year Daily Chart",
+        figsize=(16, 9),
+        savefig=f"charts/{symbol}_1y.png",
+        tight_layout=True,
+    )
+
 # ----------------------------
 # Plotting with legend on chart
 # ----------------------------
@@ -456,7 +474,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, patterns):
     return legend_items
 
 # ----------------------------
-# Main loop
+# Main loop with dynamic filenames
 # ----------------------------
 for symbol in symbols:
     df = yf.download(
@@ -483,16 +501,25 @@ for symbol in symbols:
         index=pd.to_datetime(df.index)
     )
     
-    # Detect patterns
-    detector = PatternDetector(clean_df)
-    patterns = [
-        detector.detect_head_shoulders(),
-        detector.detect_double_top_bottom(),
-        detector.detect_triangle(),
-        detector.detect_flag_pennant(),
-        detector.detect_cup_handle(),
-        detector.detect_price_channels()
-    ]
+    # Generate charts based on pattern setting
+    if enable_patterns:
+        # Detect all patterns
+        detector = PatternDetector(clean_df)
+        patterns = [
+            detector.detect_head_shoulders(),
+            detector.detect_double_top_bottom(),
+            detector.detect_triangle(),
+            detector.detect_flag_pennant(),
+            detector.detect_cup_handle(),
+            detector.detect_price_channels()
+        ]
+        
+        # Plot with patterns (saves as symbol_1y_patterns.png)
+        legend_items = plot_with_patterns_and_legend(clean_df, symbol, patterns)
+    else:
+        # Plot simple chart (saves as symbol_1y.png)
+        plot_simple_chart(clean_df, symbol)
+        print(f"{symbol}: Simple chart generated")
     
     # Plot with patterns and legend (only for detected patterns)
     legend_items = plot_with_patterns_and_legend(clean_df, symbol, patterns)
