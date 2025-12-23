@@ -8,6 +8,13 @@ from scipy.signal import find_peaks, find_peaks_cwt
 from sklearn.linear_model import LinearRegression
 
 # ----------------------------
+# Load symbols
+# ----------------------------
+with open("symbols.yaml", "r") as f:
+    symbols = yaml.safe_load(f)["symbols"]
+os.makedirs("charts", exist_ok=True)
+
+# ----------------------------
 # Enhanced Pattern Detection
 # ----------------------------
 class PatternDetector:
@@ -16,9 +23,11 @@ class PatternDetector:
         self.closes = df['Close'].values
         self.highs = df['High'].values
         self.lows = df['Low'].values
-        # Fix: Use numpy array directly
-        self.volume = df.get('Volume', pd.Series(np.ones(len(df)), index=df.index)).values  
-
+        # Fix: Handle volume properly
+        if 'Volume' in df.columns:
+            self.volume = df['Volume'].values
+        else:
+            self.volume = np.ones(len(df))
         
     def find_peaks_troughs(self, prominence=0.02):
         """Find significant peaks and troughs"""
@@ -201,7 +210,7 @@ class PatternDetector:
                     }
         
         return None
-    
+
     def detect_price_channels(self, min_touches=3, parallel_tolerance=0.02, lookback_period=60):
         """Detect Price Channels focusing on recent data"""
         # Only look at recent data
@@ -273,126 +282,186 @@ class PatternDetector:
                         'channel_width': channel_width,
                         'start_idx': max(min(upper_points[0], lower_points[0]), start_idx),
                         'end_idx': max(upper_points[-1], lower_points[-1]),
-                        'lookback_start': start_idx  # Track where we started looking
+                        'lookback_start': start_idx
                     }
         
         return None
 
-
 # ----------------------------
-# Enhanced plotting function
+# Plotting with dynamic legend
 # ----------------------------
-def plot_with_patterns(clean_df, symbol, patterns):
-    """Plot chart with detected patterns"""
+def plot_with_patterns_and_legend(clean_df, symbol, patterns):
+    """Plot chart with colored pattern lines and legend only for detected patterns"""
     addplots = []
+    legend_items = []
     
     for pattern in patterns:
         if pattern is None:
             continue
             
         if pattern['type'] == 'head_shoulders':
-            # Draw neckline
+            # Draw neckline (red dashed)
             neckline = np.full(len(clean_df), pattern['neckline'])
             addplots.append(mpf.make_addplot(neckline, color='red', linestyle='--', width=2))
+            legend_items.append("Head & Shoulders Neckline (Red)")
             
         elif pattern['type'] in ['double_top', 'double_bottom']:
-            # Draw support/resistance line
+            # Draw support/resistance line (blue dashed)
             level = pattern.get('support', pattern.get('resistance'))
             if level:
                 line = np.full(len(clean_df), level)
                 addplots.append(mpf.make_addplot(line, color='blue', linestyle='--', width=2))
+                pattern_name = "Double Top" if pattern['type'] == 'double_top' else "Double Bottom"
+                legend_items.append(f"{pattern_name} Level (Blue)")
                 
         elif 'triangle' in pattern['type']:
-            # Draw triangle trendlines
+            # Draw triangle trendlines (green)
             peaks, troughs = pattern['peaks'], pattern['troughs']
-            if len(peaks) >= 2 and len(troughs) >= 2:
+            triangle_name = pattern['type'].replace('_', ' ').title()
+            
+            if len(peaks) >= 2:
                 # Upper trendline
-                x_peaks = peaks
-                y_peaks = clean_df['High'].iloc[peaks].values
-                if len(x_peaks) >= 2:
-                    slope = (y_peaks[-1] - y_peaks[0]) / (x_peaks[-1] - x_peaks[0])
-                    intercept = y_peaks[0] - slope * x_peaks[0]
-                    upper_line = slope * np.arange(len(clean_df)) + intercept
-                    addplots.append(mpf.make_addplot(upper_line, color='green', width=2))
+                upper_line = np.full(len(clean_df), np.nan)
+                start_idx = peaks[0]
+                end_idx = min(peaks[-1] + 20, len(clean_df) - 1)
                 
+                slope = (clean_df['High'].iloc[peaks[-1]] - clean_df['High'].iloc[peaks[0]]) / (peaks[-1] - peaks[0])
+                intercept = clean_df['High'].iloc[peaks[0]] - slope * peaks[0]
+                
+                for i in range(start_idx, end_idx):
+                    upper_line[i] = slope * i + intercept
+                addplots.append(mpf.make_addplot(upper_line, color='green', width=2))
+                
+            if len(troughs) >= 2:
                 # Lower trendline
-                x_troughs = troughs
-                y_troughs = clean_df['Low'].iloc[troughs].values
-                if len(x_troughs) >= 2:
-                    slope = (y_troughs[-1] - y_troughs[0]) / (x_troughs[-1] - x_troughs[0])
-                    intercept = y_troughs[0] - slope * x_troughs[0]
-                    lower_line = slope * np.arange(len(clean_df)) + intercept
-                    addplots.append(mpf.make_addplot(lower_line, color='green', width=2))
+                lower_line = np.full(len(clean_df), np.nan)
+                start_idx = troughs[0]
+                end_idx = min(troughs[-1] + 20, len(clean_df) - 1)
+                
+                slope = (clean_df['Low'].iloc[troughs[-1]] - clean_df['Low'].iloc[troughs[0]]) / (troughs[-1] - troughs[0])
+                intercept = clean_df['Low'].iloc[troughs[0]] - slope * troughs[0]
+                
+                for i in range(start_idx, end_idx):
+                    lower_line[i] = slope * i + intercept
+                addplots.append(mpf.make_addplot(lower_line, color='green', width=2))
+            
+            legend_items.append(f"{triangle_name} (Green)")
+        
+        elif pattern['type'] in ['flag', 'bear_flag']:
+            # Draw flag boundaries (orange)
+            flag_start = pattern['flag_start']
+            flag_high = clean_df['High'].iloc[flag_start:].max()
+            flag_low = clean_df['Low'].iloc[flag_start:].min()
+            
+            flag_top = np.full(len(clean_df), np.nan)
+            flag_bottom = np.full(len(clean_df), np.nan)
+            
+            for i in range(flag_start, len(clean_df)):
+                flag_top[i] = flag_high
+                flag_bottom[i] = flag_low
+            
+            addplots.append(mpf.make_addplot(flag_top, color='orange', width=2, linestyle='--'))
+            addplots.append(mpf.make_addplot(flag_bottom, color='orange', width=2, linestyle='--'))
+            
+            flag_type = "Bull Flag" if pattern['type'] == 'flag' else "Bear Flag"
+            legend_items.append(f"{flag_type} (Orange)")
         
         elif pattern['type'] == 'cup_handle':
-            # Draw cup outline
-            cup_start = pattern['cup_start']
-            cup_end = pattern['cup_end']
-            handle_end = pattern['handle_end']
-            
-            # Rim level (resistance)
+            # Draw rim level (purple dashed)
             rim_line = np.full(len(clean_df), pattern['rim_level'])
             addplots.append(mpf.make_addplot(rim_line, color='purple', linestyle='--', width=2))
             
-            # Highlight cup and handle region with different colors
+            # Highlight cup region (orange)
+            cup_start = pattern['cup_start']
+            cup_end = pattern['cup_end']
             cup_highlight = np.full(len(clean_df), np.nan)
             cup_highlight[cup_start:cup_end] = clean_df['Close'].iloc[cup_start:cup_end]
             addplots.append(mpf.make_addplot(cup_highlight, color='orange', width=3, alpha=0.7))
             
+            # Highlight handle region (red)
+            handle_start = pattern['handle_start']
+            handle_end = pattern['handle_end']
             handle_highlight = np.full(len(clean_df), np.nan)
-            handle_highlight[pattern['handle_start']:handle_end] = clean_df['Close'].iloc[pattern['handle_start']:handle_end]
+            handle_highlight[handle_start:handle_end] = clean_df['Close'].iloc[handle_start:handle_end]
             addplots.append(mpf.make_addplot(handle_highlight, color='red', width=3, alpha=0.7))
+            
+            legend_items.extend([
+                "Cup & Handle Rim (Purple)",
+                "Cup Formation (Orange)", 
+                "Handle Formation (Red)"
+            ])
         
         elif 'channel' in pattern['type']:
-            # Draw channel trendlines
+            # Draw channel trendlines (cyan)
             start_idx = pattern['start_idx']
-            end_idx = min(pattern['end_idx'], len(clean_df) - 1)
+            end_idx = min(pattern['end_idx'] + 20, len(clean_df) - 1)
             
             # Upper channel line
-            x_range = np.arange(start_idx, len(clean_df))
-            upper_line = pattern['upper_slope'] * x_range + pattern['upper_intercept']
-            upper_plot = np.full(len(clean_df), np.nan)
-            upper_plot[start_idx:] = upper_line[:len(clean_df) - start_idx]
-            addplots.append(mpf.make_addplot(upper_plot, color='cyan', width=2))
+            upper_line = np.full(len(clean_df), np.nan)
+            for i in range(start_idx, end_idx):
+                upper_line[i] = pattern['upper_slope'] * i + pattern['upper_intercept']
+            addplots.append(mpf.make_addplot(upper_line, color='cyan', width=2))
             
             # Lower channel line
-            lower_line = pattern['lower_slope'] * x_range + pattern['lower_intercept']
-            lower_plot = np.full(len(clean_df), np.nan)
-            lower_plot[start_idx:] = lower_line[:len(clean_df) - start_idx]
-            addplots.append(mpf.make_addplot(lower_plot, color='cyan', width=2))
+            lower_line = np.full(len(clean_df), np.nan)
+            for i in range(start_idx, end_idx):
+                lower_line[i] = pattern['lower_slope'] * i + pattern['lower_intercept']
+            addplots.append(mpf.make_addplot(lower_line, color='cyan', width=2))
+            
+            channel_name = pattern['type'].replace('_', ' ').title()
+            legend_items.append(f"{channel_name} (Cyan)")
     
-    # Plot with patterns
+    # Print legend only if patterns were found
+    if legend_items:
+        print(f"\n{symbol} - Detected Patterns:")
+        for i, item in enumerate(legend_items, 1):
+            print(f"  {i}. {item}")
+    
+    # Plot title
+    title_with_patterns = f"{symbol} — 1 Year Daily Chart"
+    if legend_items:
+        title_with_patterns += f" ({len(legend_items)} pattern{'s' if len(legend_items) > 1 else ''} detected)"
+    
     mpf.plot(
         clean_df,
         type="candle",
         style="yahoo",
         addplot=addplots if addplots else None,
-        title=f"{symbol} — 1 Year Daily Chart with Patterns",
+        title=title_with_patterns,
         figsize=(16, 9),
         savefig=f"charts/{symbol}_1y_patterns.png",
         tight_layout=True,
     )
-# ----------------------------
-# Updated main loop
-# ----------------------------
-with open("symbols.yaml", "r") as f:
-    symbols = yaml.safe_load(f)["symbols"]
-os.makedirs("charts", exist_ok=True)
+    
+    return legend_items
 
+# ----------------------------
+# Main loop
+# ----------------------------
 for symbol in symbols:
-    df = yf.download(symbol, period="1y", interval="1d", auto_adjust=False, progress=False)
+    df = yf.download(
+        symbol,
+        period="1y",
+        interval="1d",
+        auto_adjust=False,
+        progress=False,
+    )
     df = df.dropna()
     
     # Fix MultiIndex columns
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     
-    clean_df = pd.DataFrame({
-        "Open": df["Open"].to_numpy().astype("float64").ravel(),
-        "High": df["High"].to_numpy().astype("float64").ravel(),
-        "Low": df["Low"].to_numpy().astype("float64").ravel(),
-        "Close": df["Close"].to_numpy().astype("float64").ravel(),
-    }, index=pd.to_datetime(df.index))
+    # Build mplfinance-safe DataFrame
+    clean_df = pd.DataFrame(
+        {
+            "Open":  df["Open"].to_numpy().astype("float64").ravel(),
+            "High":  df["High"].to_numpy().astype("float64").ravel(),
+            "Low":   df["Low"].to_numpy().astype("float64").ravel(),
+            "Close": df["Close"].to_numpy().astype("float64").ravel(),
+        },
+        index=pd.to_datetime(df.index)
+    )
     
     # Detect patterns
     detector = PatternDetector(clean_df)
@@ -401,18 +470,9 @@ for symbol in symbols:
         detector.detect_double_top_bottom(),
         detector.detect_triangle(),
         detector.detect_flag_pennant(),
-        detector.detect_cup_handle(),        # New!
-        detector.detect_price_channels(
-            min_touches=6, 
-            parallel_tolerance=0.01, 
-            lookback_period=60  # Only look at last 60 days
-            )     # New!
+        detector.detect_cup_handle(),
+        detector.detect_price_channels()
     ]
     
-    # Print detected patterns
-    detected = [p for p in patterns if p is not None]
-    if detected:
-        print(f"{symbol}: {[p['type'] for p in detected]}")
-    
-    # Plot with patterns
-    plot_with_patterns(clean_df, symbol, patterns)
+    # Plot with patterns and legend (only for detected patterns)
+    legend_items = plot_with_patterns_and_legend(clean_df, symbol, patterns)
