@@ -3,7 +3,7 @@ name: Weekly Chart Generation
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 12 * * 6'
+    - cron: '0 11 * * 6'
 
 jobs:
   build:
