@@ -466,6 +466,8 @@ def plot_with_patterns_and_legend(clean_df, symbol, patterns):
         )
         
         print(f"{symbol}: {', '.join(legend_items)}")
+    else:
+        print(f"{symbol}: No patterns detected")
     
     # Save the figure
     fig.savefig(f"charts/{symbol}_1y_patterns.png", dpi=300, bbox_inches='tight')
