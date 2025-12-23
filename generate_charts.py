@@ -341,31 +341,6 @@ class PatternDetector:
 #     ax.set_xticks(tick_positions)
 #     ax.set_xticklabels(tick_labels)
 
-def customize_date_axis(ax):
-    """Minimal date formatting - don't touch positioning"""
-    # Get the existing tick labels that mplfinance already set up correctly
-    labels = ax.get_xticklabels()
-    
-    # Only change the text of existing labels, don't add/remove any
-    new_labels = []
-    for label in labels:
-        try:
-            # Get the date from the label's position
-            date_num = label.get_position()[0]
-            date = mdates.num2date(date_num)
-            
-            if date.month == 1:
-                new_labels.append(str(date.year))
-            else:
-                new_labels.append(date.strftime('%b'))
-        except:
-            # If anything fails, keep the original label
-            new_labels.append(label.get_text())
-    
-    # Replace labels but keep all the positioning that mplfinance set up
-    ax.set_xticklabels(new_labels)
-
-
 # ----------------------------
 # Simple plotting function for charts without patterns
 # ----------------------------
@@ -383,7 +358,7 @@ def plot_simple_chart(clean_df, symbol, company_name):
     
     # Customize x-axis to show years for January, months for others
 #    customize_date_axis(axes[0], clean_df)
-    customize_date_axis(axes[0])
+#    customize_date_axis(axes[0])
 
     # Save the figure
     fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
@@ -557,7 +532,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     
     # Customize x-axis BEFORE adding legend
 #    customize_date_axis(axes[0], clean_df)
-    customize_date_axis(axes[0])
+#    customize_date_axis(axes[0])
     
     # Add legend only if patterns were detected - SEMI-TRANSPARENT OVERLAY
     if legend_items:
