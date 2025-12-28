@@ -1,6 +1,3 @@
-  # Simple all-or-nothing pattern toggle
-enable_patterns: true
-
 symbols:
   - ^DJI
   - ^DJT
