@@ -18,7 +18,6 @@ from sklearn.linear_model import LinearRegression
 with open("symbols.yaml", "r") as f:
     config = yaml.safe_load(f)
     symbols = config["symbols"]
-    enable_patterns = config.get("enable_patterns", False)
 
 os.makedirs("charts", exist_ok=True)
 
@@ -597,23 +596,25 @@ for symbol in symbols:
         },
         index=pd.to_datetime(df.index)
     )
-    
-    # Generate charts based on pattern setting
-    if enable_patterns:
-        # Detect all patterns
-        detector = PatternDetector(clean_df)
-        patterns = [
-            detector.detect_head_shoulders(),
-            detector.detect_double_top_bottom(),
-            detector.detect_triangle(),
-            detector.detect_flag_pennant(),
-            detector.detect_cup_handle(),
-            detector.detect_price_channels()
-        ]
-        
-        # Plot with patterns and company name - FIXED: Added company_name parameter
-        legend_items = plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns)
-    else:
-        # Plot simple chart with company name
-        plot_simple_chart(clean_df, symbol, company_name)
-        print(f"{symbol}: Simple chart generated")
+
+    for enable_patterns in [True, False]:
+        print(f"  Generating chart for enable_patterns={enable_patterns}...")
+        # Generate charts based on pattern setting
+        if enable_patterns:
+            # Detect all patterns
+            detector = PatternDetector(clean_df)
+            patterns = [
+                detector.detect_head_shoulders(),
+                detector.detect_double_top_bottom(),
+                detector.detect_triangle(),
+                detector.detect_flag_pennant(),
+                detector.detect_cup_handle(),
+                detector.detect_price_channels()
+            ]
+
+            # Plot with patterns and company name - FIXED: Added company_name parameter
+            legend_items = plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns)
+        else:
+            # Plot simple chart with company name
+            plot_simple_chart(clean_df, symbol, company_name)
+            print(f"{symbol}: Simple chart generated")
