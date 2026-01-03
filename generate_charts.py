@@ -47,272 +47,209 @@ def get_company_name(symbol):
 class PatternDetector:
     def __init__(self, df):
         self.df = df
-        self.closes = df['Close'].values
-        self.highs = df['High'].values
-        self.lows = df['Low'].values
-        # Fix: Handle volume properly
-        if 'Volume' in df.columns:
-            self.volume = df['Volume'].values
-        else:
-            self.volume = np.ones(len(df))
-        
-    def find_peaks_troughs(self, prominence=0.02):
-        """Find significant peaks and troughs"""
-        price_range = np.max(self.closes) - np.min(self.closes)
-        min_prominence = prominence * price_range
-        
-        peaks, _ = find_peaks(self.highs, prominence=min_prominence, distance=5)
-        troughs, _ = find_peaks(-self.lows, prominence=min_prominence, distance=5)
+        self.closes = df["Close"].values
+        self.highs = df["High"].values
+        self.lows = df["Low"].values
+        self.volume = df["Volume"].values if "Volume" in df.columns else np.ones(len(df))
+
+        # Precompute indicators once
+        self.atr = self._compute_atr(14)
+        self.sma_fast = self._sma(20)
+        self.sma_slow = self._sma(50)
+
+    # ----------------------------
+    # Core indicators
+    # ----------------------------
+    def _sma(self, period):
+        return pd.Series(self.closes).rolling(period).mean().values
+
+    def _compute_atr(self, period=14):
+        high = pd.Series(self.highs)
+        low = pd.Series(self.lows)
+        close = pd.Series(self.closes)
+
+        tr = pd.concat([
+            high - low,
+            (high - close.shift()).abs(),
+            (low - close.shift()).abs()
+        ], axis=1).max(axis=1)
+
+        return tr.rolling(period).mean().values
+
+    # ----------------------------
+    # Market context
+    # ----------------------------
+    def market_context(self):
+        trend = np.sign(self.sma_fast[-1] - self.sma_slow[-1])
+        volatility = self.atr[-1] / self.closes[-1]
+
+        return {
+            "trend": trend,          # -1 down, 0 flat, 1 up
+            "volatility": volatility
+        }
+
+    # ----------------------------
+    # Adaptive extrema detection
+    # ----------------------------
+    def find_peaks_troughs(self, atr_mult=1.2):
+        atr_mean = np.nanmean(self.atr)
+        if np.isnan(atr_mean):
+            return np.array([]), np.array([])
+
+        min_prominence = atr_mean * atr_mult
+        min_distance = max(5, int(len(self.closes) * 0.02))
+
+        peaks, _ = find_peaks(
+            self.highs,
+            prominence=min_prominence,
+            distance=min_distance
+        )
+
+        troughs, _ = find_peaks(
+            -self.lows,
+            prominence=min_prominence,
+            distance=min_distance
+        )
+
         return peaks, troughs
-    
+
+    # ----------------------------
+    # Utility scoring helpers
+    # ----------------------------
+    def _normalize_slope(self, slope):
+        return slope / np.mean(self.closes)
+
+    def _volume_slope(self, start, end):
+        if end - start < 5:
+            return 0
+        x = np.arange(end - start)
+        y = self.volume[start:end]
+        return np.polyfit(x, y, 1)[0]
+
+    # ----------------------------
+    # Head & Shoulders (Scored)
+    # ----------------------------
     def detect_head_shoulders(self):
-        """Detect Head and Shoulders pattern"""
+        ctx = self.market_context()
+        if ctx["trend"] != 1:
+            return None
+
         peaks, _ = self.find_peaks_troughs()
         if len(peaks) < 3:
             return None
-            
-        # Look for recent 3-peak pattern
+
+        results = []
+
         for i in range(len(peaks) - 2):
             left, head, right = peaks[i:i+3]
-            
-            # Head should be higher than shoulders
-            if (self.highs[head] > self.highs[left] and 
-                self.highs[head] > self.highs[right] and
-                abs(self.highs[left] - self.highs[right]) < 0.05 * self.highs[head]):
-                
-                return {
-                    'type': 'head_shoulders',
-                    'left_shoulder': left,
-                    'head': head,
-                    'right_shoulder': right,
-                    'neckline': min(self.lows[left:right+1])
-                }
-        return None
-    
+
+            if not (
+                self.highs[head] > self.highs[left] and
+                self.highs[head] > self.highs[right]
+            ):
+                continue
+
+            price_sym = abs(self.highs[left] - self.highs[right]) / self.highs[head]
+            time_sym = abs((head - left) - (right - head)) / (right - left)
+
+            neckline = min(self.lows[left:right+1])
+            vol_decline = self._volume_slope(left, head) < 0
+
+            score = (
+                0.4 * (1 - price_sym) +
+                0.3 * (1 - time_sym) +
+                0.3 * vol_decline
+            )
+
+            if score > 0.6:
+                results.append({
+                    "type": "head_shoulders",
+                    "left_shoulder": left,
+                    "head": head,
+                    "right_shoulder": right,
+                    "neckline": neckline,
+                    "score": round(score, 2)
+                })
+
+        return max(results, key=lambda x: x["score"]) if results else None
+
+    # ----------------------------
+    # Double Top / Bottom (Scored)
+    # ----------------------------
     def detect_double_top_bottom(self):
-        """Detect Double Top/Bottom patterns"""
+        ctx = self.market_context()
         peaks, troughs = self.find_peaks_troughs()
-        
-        # Double Top
-        if len(peaks) >= 2:
-            for i in range(len(peaks) - 1):
-                p1, p2 = peaks[i], peaks[i+1]
-                if abs(self.highs[p1] - self.highs[p2]) < 0.03 * self.highs[p1]:
-                    return {
-                        'type': 'double_top',
-                        'peak1': p1,
-                        'peak2': p2,
-                        'support': min(self.lows[p1:p2+1])
-                    }
-        
-        # Double Bottom
-        if len(troughs) >= 2:
-            for i in range(len(troughs) - 1):
-                t1, t2 = troughs[i], troughs[i+1]
-                if abs(self.lows[t1] - self.lows[t2]) < 0.03 * self.lows[t1]:
-                    return {
-                        'type': 'double_bottom',
-                        'trough1': t1,
-                        'trough2': t2,
-                        'resistance': max(self.highs[t1:t2+1])
-                    }
-        return None
-    
-    def detect_triangle(self, window=20):
-        """Detect Triangle patterns"""
+
+        patterns = []
+
+        for p1, p2 in zip(peaks[:-1], peaks[1:]):
+            height_diff = abs(self.highs[p1] - self.highs[p2]) / self.highs[p1]
+            if height_diff < 0.03 and ctx["trend"] == 1:
+                score = 1 - height_diff
+                patterns.append({
+                    "type": "double_top",
+                    "peak1": p1,
+                    "peak2": p2,
+                    "support": min(self.lows[p1:p2+1]),
+                    "score": round(score, 2)
+                })
+
+        for t1, t2 in zip(troughs[:-1], troughs[1:]):
+            depth_diff = abs(self.lows[t1] - self.lows[t2]) / self.lows[t1]
+            if depth_diff < 0.03 and ctx["trend"] == -1:
+                score = 1 - depth_diff
+                patterns.append({
+                    "type": "double_bottom",
+                    "trough1": t1,
+                    "trough2": t2,
+                    "resistance": max(self.highs[t1:t2+1]),
+                    "score": round(score, 2)
+                })
+
+        return max(patterns, key=lambda x: x["score"]) if patterns else None
+
+    # ----------------------------
+    # Triangle (Normalized slopes)
+    # ----------------------------
+    def detect_triangle(self, window=30):
         if len(self.closes) < window:
             return None
-            
-        recent_data = self.closes[-window:]
-        x = np.arange(len(recent_data))
-        
-        # Find upper and lower trendlines
+
         peaks, troughs = self.find_peaks_troughs()
         recent_peaks = peaks[peaks >= len(self.closes) - window]
         recent_troughs = troughs[troughs >= len(self.closes) - window]
-        
-        if len(recent_peaks) >= 2 and len(recent_troughs) >= 2:
-            # Calculate slopes
-            peak_slope = self._calculate_trendline_slope(recent_peaks, self.highs)
-            trough_slope = self._calculate_trendline_slope(recent_troughs, self.lows)
-            
-            # Classify triangle type
-            if abs(peak_slope) < 0.001 and trough_slope > 0:
-                return {'type': 'ascending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
-            elif peak_slope < 0 and abs(trough_slope) < 0.001:
-                return {'type': 'descending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
-            elif peak_slope < 0 and trough_slope > 0:
-                return {'type': 'symmetrical_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
-        
-        return None
-    
-    def _calculate_trendline_slope(self, indices, values):
-        """Calculate slope of trendline through given points"""
-        if len(indices) < 2:
-            return 0
-        x = np.array(indices).reshape(-1, 1)
-        y = values[indices]
-        reg = LinearRegression().fit(x, y)
-        return reg.coef_[0]
-    
-    def detect_flag_pennant(self, window=15):
-        """Detect Flag and Pennant patterns"""
-        if len(self.closes) < window * 2:
-            return None
-            
-        # Look for sharp move (pole) followed by consolidation
-        recent = self.closes[-window:]
-        prev_period = self.closes[-(window*2):-window]
-        
-        # Check for significant move (pole)
-        pole_move = (recent[0] - prev_period[0]) / prev_period[0]
-        if abs(pole_move) > 0.05:  # 5% move
-            # Check if recent period is consolidating
-            volatility = np.std(recent) / np.mean(recent)
-            if volatility < 0.03:  # Low volatility = consolidation
-                return {
-                    'type': 'flag' if pole_move > 0 else 'bear_flag',
-                    'pole_start': len(self.closes) - window * 2,
-                    'flag_start': len(self.closes) - window,
-                    'pole_move': pole_move
-                }
-        return None
 
-    def detect_cup_handle(self, min_cup_length=30, handle_ratio=0.3):
-        """Detect Cup and Handle pattern"""
-        if len(self.closes) < min_cup_length + 10:
+        if len(recent_peaks) < 2 or len(recent_troughs) < 2:
             return None
-        
-        # Look for cup formation (U-shaped bottom)
-        for start_idx in range(len(self.closes) - min_cup_length):
-            end_idx = start_idx + min_cup_length
-            cup_data = self.closes[start_idx:end_idx]
-            
-            # Find the deepest point (bottom of cup)
-            bottom_idx = start_idx + np.argmin(cup_data)
-            
-            # Check if it's U-shaped (not V-shaped)
-            left_side = cup_data[:bottom_idx - start_idx]
-            right_side = cup_data[bottom_idx - start_idx:]
-            
-            if len(left_side) < 5 or len(right_side) < 5:
-                continue
-                
-            # Cup should have similar start and end levels
-            cup_start_price = self.closes[start_idx]
-            cup_end_price = self.closes[end_idx - 1]
-            
-            if abs(cup_start_price - cup_end_price) > 0.05 * cup_start_price:
-                continue
-                
-            # Look for handle after the cup
-            handle_start = end_idx
-            max_handle_length = int(min_cup_length * handle_ratio)
-            
-            if handle_start + max_handle_length > len(self.closes):
-                continue
-                
-            # Handle should be in upper third of cup range
-            cup_bottom = self.closes[bottom_idx]
-            cup_top = max(cup_start_price, cup_end_price)
-            upper_third = cup_bottom + 0.67 * (cup_top - cup_bottom)
-            
-            # Find handle formation
-            for handle_end in range(handle_start + 5, min(handle_start + max_handle_length, len(self.closes))):
-                handle_data = self.closes[handle_start:handle_end]
-                
-                # Handle should drift slightly downward but stay in upper third
-                if (np.min(handle_data) > upper_third and 
-                    handle_data[-1] < handle_data[0] and  # Slight downward drift
-                    abs(handle_data[-1] - handle_data[0]) < 0.03 * handle_data[0]):  # Small drift
-                    
-                    return {
-                        'type': 'cup_handle',
-                        'cup_start': start_idx,
-                        'cup_bottom': bottom_idx,
-                        'cup_end': end_idx - 1,
-                        'handle_start': handle_start,
-                        'handle_end': handle_end,
-                        'rim_level': cup_top
-                    }
-        
-        return None
 
-    def detect_price_channels(self, min_touches=3, parallel_tolerance=0.02, lookback_period=60):
-        """Detect Price Channels focusing on recent data"""
-        # Only look at recent data
-        start_idx = max(0, len(self.closes) - lookback_period)
-        recent_closes = self.closes[start_idx:]
-        recent_highs = self.highs[start_idx:]
-        recent_lows = self.lows[start_idx:]
-        
-        # Create temporary detector for recent data
-        recent_df = self.df.iloc[start_idx:].copy()
-        temp_detector = PatternDetector.__new__(PatternDetector)
-        temp_detector.closes = recent_closes
-        temp_detector.highs = recent_highs
-        temp_detector.lows = recent_lows
-        
-        # Find peaks and troughs in recent data only
-        peaks, troughs = temp_detector.find_peaks_troughs(prominence=0.015)
-        
-        if len(peaks) < min_touches or len(troughs) < min_touches:
+        peak_slope = self._normalize_slope(
+            self._calculate_slope(recent_peaks, self.highs)
+        )
+        trough_slope = self._normalize_slope(
+            self._calculate_slope(recent_troughs, self.lows)
+        )
+
+        if abs(peak_slope) < 0.001 and trough_slope > 0:
+            ttype = "ascending_triangle"
+        elif peak_slope < 0 and abs(trough_slope) < 0.001:
+            ttype = "descending_triangle"
+        elif peak_slope < 0 and trough_slope > 0:
+            ttype = "symmetrical_triangle"
+        else:
             return None
-        
-        # Adjust indices back to original dataframe
-        peaks = peaks + start_idx
-        troughs = troughs + start_idx
-        
-        # Try different combinations of peaks for upper trendline
-        for i in range(len(peaks) - min_touches + 1):
-            upper_points = peaks[i:i + min_touches]
-            
-            # Calculate upper trendline
-            upper_slope = self._calculate_trendline_slope(upper_points, self.highs)
-            upper_intercept = self.highs[upper_points[0]] - upper_slope * upper_points[0]
-            
-            # Try to find parallel lower trendline
-            for j in range(len(troughs) - min_touches + 1):
-                lower_points = troughs[j:j + min_touches]
-                
-                # Calculate lower trendline
-                lower_slope = self._calculate_trendline_slope(lower_points, self.lows)
-                lower_intercept = self.lows[lower_points[0]] - lower_slope * lower_points[0]
-                
-                # Check if lines are roughly parallel
-                slope_diff = abs(upper_slope - lower_slope)
-                avg_slope = abs(upper_slope + lower_slope) / 2
-                
-                if avg_slope == 0 or slope_diff / avg_slope < parallel_tolerance:
-                    # Calculate channel width
-                    mid_point = (upper_points[-1] + lower_points[-1]) / 2
-                    upper_level = upper_slope * mid_point + upper_intercept
-                    lower_level = lower_slope * mid_point + lower_intercept
-                    channel_width = upper_level - lower_level
-                    
-                    # Classify channel direction
-                    if abs(upper_slope) < 0.01:
-                        channel_type = 'horizontal_channel'
-                    elif upper_slope > 0:
-                        channel_type = 'ascending_channel'
-                    else:
-                        channel_type = 'descending_channel'
-                    
-                    return {
-                        'type': channel_type,
-                        'upper_points': upper_points,
-                        'lower_points': lower_points,
-                        'upper_slope': upper_slope,
-                        'upper_intercept': upper_intercept,
-                        'lower_slope': lower_slope,
-                        'lower_intercept': lower_intercept,
-                        'channel_width': channel_width,
-                        'start_idx': max(min(upper_points[0], lower_points[0]), start_idx),
-                        'end_idx': max(upper_points[-1], lower_points[-1]),
-                        'lookback_start': start_idx
-                    }
-        
-        return None
+
+        return {
+            "type": ttype,
+            "peaks": recent_peaks,
+            "troughs": recent_troughs,
+            "score": 0.7
+        }
+
+    def _calculate_slope(self, idx, values):
+        x = np.array(idx).reshape(-1, 1)
+        y = values[idx]
+        return LinearRegression().fit(x, y).coef_[0]
+
 
 # ----------------------------
 # Date axis customization 
@@ -562,6 +499,40 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     plt.close(fig)  # Close to free memory
     
     return legend_items
+
+
+#-----------------------
+#Commentary
+#----------------------
+
+
+def pattern_annotation(pattern):
+    """
+    Converts pattern dict into Substack-ready text.
+    """
+
+    score = pattern.get("score", 0)
+    confidence = (
+        "High" if score >= 0.8 else
+        "Moderate" if score >= 0.65 else
+        "Low"
+    )
+
+    text = f"**{pattern['type'].replace('_', ' ').title()}** detected "
+
+    if "breakout" in pattern and pattern["breakout"]["confirmed"]:
+        text += (
+            f"with a confirmed breakout "
+            f"{pattern['breakout']['bars_after']} bars later "
+            f"on {pattern['breakout']['volume_ratio']}× average volume. "
+        )
+    else:
+        text += "but without a confirmed breakout yet. "
+
+    text += f"Overall confidence: **{confidence}**."
+
+    return text
+
 
 # ----------------------------
 # Main loop
