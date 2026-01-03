@@ -44,211 +44,50 @@ def get_company_name(symbol):
 # ----------------------------
 # Enhanced Pattern Detection
 # ----------------------------
-class PatternDetector:
-    def __init__(self, df):
-        self.df = df
-        self.closes = df["Close"].values
-        self.highs = df["High"].values
-        self.lows = df["Low"].values
-        self.volume = df["Volume"].values if "Volume" in df.columns else np.ones(len(df))
+def pattern_annotation(pattern):
+    """
+    Converts pattern dict into Substack-ready text.
+    Safe against missing keys and partial patterns.
+    """
 
-        # Precompute indicators once
-        self.atr = self._compute_atr(14)
-        self.sma_fast = self._sma(20)
-        self.sma_slow = self._sma(50)
+    if not pattern or not isinstance(pattern, dict):
+        return None
 
-    # ----------------------------
-    # Core indicators
-    # ----------------------------
-    def _sma(self, period):
-        return pd.Series(self.closes).rolling(period).mean().values
+    # ---- Pattern name ----
+    pattern_type = pattern.get("type", "pattern")
+    pattern_name = pattern_type.replace("_", " ").title()
 
-    def _compute_atr(self, period=14):
-        high = pd.Series(self.highs)
-        low = pd.Series(self.lows)
-        close = pd.Series(self.closes)
+    # ---- Score & confidence ----
+    score = pattern.get("score")
+    if score is None:
+        confidence = "Unknown"
+    elif score >= 0.8:
+        confidence = "High"
+    elif score >= 0.65:
+        confidence = "Moderate"
+    else:
+        confidence = "Low"
 
-        tr = pd.concat([
-            high - low,
-            (high - close.shift()).abs(),
-            (low - close.shift()).abs()
-        ], axis=1).max(axis=1)
+    text = f"**{pattern_name}** detected "
 
-        return tr.rolling(period).mean().values
+    # ---- Breakout handling (defensive) ----
+    breakout = pattern.get("breakout")
 
-    # ----------------------------
-    # Market context
-    # ----------------------------
-    def market_context(self):
-        trend = np.sign(self.sma_fast[-1] - self.sma_slow[-1])
-        volatility = self.atr[-1] / self.closes[-1]
+    if isinstance(breakout, dict) and breakout.get("confirmed"):
+        bars = breakout.get("bars_after", "?")
+        vol = breakout.get("volume_ratio", "?")
 
-        return {
-            "trend": trend,          # -1 down, 0 flat, 1 up
-            "volatility": volatility
-        }
-
-    # ----------------------------
-    # Adaptive extrema detection
-    # ----------------------------
-    def find_peaks_troughs(self, atr_mult=1.2):
-        atr_mean = np.nanmean(self.atr)
-        if np.isnan(atr_mean):
-            return np.array([]), np.array([])
-
-        min_prominence = atr_mean * atr_mult
-        min_distance = max(5, int(len(self.closes) * 0.02))
-
-        peaks, _ = find_peaks(
-            self.highs,
-            prominence=min_prominence,
-            distance=min_distance
+        text += (
+            f"with a confirmed breakout "
+            f"{bars} bars later "
+            f"on {vol}× average volume. "
         )
+    else:
+        text += "but without a confirmed breakout yet. "
 
-        troughs, _ = find_peaks(
-            -self.lows,
-            prominence=min_prominence,
-            distance=min_distance
-        )
+    text += f"Overall confidence: **{confidence}**."
 
-        return peaks, troughs
-
-    # ----------------------------
-    # Utility scoring helpers
-    # ----------------------------
-    def _normalize_slope(self, slope):
-        return slope / np.mean(self.closes)
-
-    def _volume_slope(self, start, end):
-        if end - start < 5:
-            return 0
-        x = np.arange(end - start)
-        y = self.volume[start:end]
-        return np.polyfit(x, y, 1)[0]
-
-    # ----------------------------
-    # Head & Shoulders (Scored)
-    # ----------------------------
-    def detect_head_shoulders(self):
-        ctx = self.market_context()
-        if ctx["trend"] != 1:
-            return None
-
-        peaks, _ = self.find_peaks_troughs()
-        if len(peaks) < 3:
-            return None
-
-        results = []
-
-        for i in range(len(peaks) - 2):
-            left, head, right = peaks[i:i+3]
-
-            if not (
-                self.highs[head] > self.highs[left] and
-                self.highs[head] > self.highs[right]
-            ):
-                continue
-
-            price_sym = abs(self.highs[left] - self.highs[right]) / self.highs[head]
-            time_sym = abs((head - left) - (right - head)) / (right - left)
-
-            neckline = min(self.lows[left:right+1])
-            vol_decline = self._volume_slope(left, head) < 0
-
-            score = (
-                0.4 * (1 - price_sym) +
-                0.3 * (1 - time_sym) +
-                0.3 * vol_decline
-            )
-
-            if score > 0.6:
-                results.append({
-                    "type": "head_shoulders",
-                    "left_shoulder": left,
-                    "head": head,
-                    "right_shoulder": right,
-                    "neckline": neckline,
-                    "score": round(score, 2)
-                })
-
-        return max(results, key=lambda x: x["score"]) if results else None
-
-    # ----------------------------
-    # Double Top / Bottom (Scored)
-    # ----------------------------
-    def detect_double_top_bottom(self):
-        ctx = self.market_context()
-        peaks, troughs = self.find_peaks_troughs()
-
-        patterns = []
-
-        for p1, p2 in zip(peaks[:-1], peaks[1:]):
-            height_diff = abs(self.highs[p1] - self.highs[p2]) / self.highs[p1]
-            if height_diff < 0.03 and ctx["trend"] == 1:
-                score = 1 - height_diff
-                patterns.append({
-                    "type": "double_top",
-                    "peak1": p1,
-                    "peak2": p2,
-                    "support": min(self.lows[p1:p2+1]),
-                    "score": round(score, 2)
-                })
-
-        for t1, t2 in zip(troughs[:-1], troughs[1:]):
-            depth_diff = abs(self.lows[t1] - self.lows[t2]) / self.lows[t1]
-            if depth_diff < 0.03 and ctx["trend"] == -1:
-                score = 1 - depth_diff
-                patterns.append({
-                    "type": "double_bottom",
-                    "trough1": t1,
-                    "trough2": t2,
-                    "resistance": max(self.highs[t1:t2+1]),
-                    "score": round(score, 2)
-                })
-
-        return max(patterns, key=lambda x: x["score"]) if patterns else None
-
-    # ----------------------------
-    # Triangle (Normalized slopes)
-    # ----------------------------
-    def detect_triangle(self, window=30):
-        if len(self.closes) < window:
-            return None
-
-        peaks, troughs = self.find_peaks_troughs()
-        recent_peaks = peaks[peaks >= len(self.closes) - window]
-        recent_troughs = troughs[troughs >= len(self.closes) - window]
-
-        if len(recent_peaks) < 2 or len(recent_troughs) < 2:
-            return None
-
-        peak_slope = self._normalize_slope(
-            self._calculate_slope(recent_peaks, self.highs)
-        )
-        trough_slope = self._normalize_slope(
-            self._calculate_slope(recent_troughs, self.lows)
-        )
-
-        if abs(peak_slope) < 0.001 and trough_slope > 0:
-            ttype = "ascending_triangle"
-        elif peak_slope < 0 and abs(trough_slope) < 0.001:
-            ttype = "descending_triangle"
-        elif peak_slope < 0 and trough_slope > 0:
-            ttype = "symmetrical_triangle"
-        else:
-            return None
-
-        return {
-            "type": ttype,
-            "peaks": recent_peaks,
-            "troughs": recent_troughs,
-            "score": 0.7
-        }
-
-    def _calculate_slope(self, idx, values):
-        x = np.array(idx).reshape(-1, 1)
-        y = values[idx]
-        return LinearRegression().fit(x, y).coef_[0]
+    return text
 
 
 # ----------------------------
