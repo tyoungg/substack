@@ -11,240 +11,235 @@ from scipy.signal import find_peaks
 from sklearn.linear_model import LinearRegression
 
 # ----------------------------
-# Load symbols and config
+# Configuration
 # ----------------------------
+os.makedirs("charts", exist_ok=True)
+
 with open("symbols.yaml", "r") as f:
     config = yaml.safe_load(f)
     symbols = config["symbols"]
 
-os.makedirs("charts", exist_ok=True)
-
 # ----------------------------
-# Helper function to get company name
+# Helper Functions
 # ----------------------------
 def get_company_name(symbol):
     """Get company name from yfinance, fallback to symbol if unavailable"""
     try:
         ticker = yf.Ticker(symbol)
         info = ticker.info
-        company_name = (
-            info.get('longName') or 
-            info.get('shortName') or 
-            info.get('name') or 
-            symbol
-        )
-        return company_name
+        return info.get('longName') or info.get('shortName') or info.get('name') or symbol
     except:
         return symbol
 
-# ----------------------------
-# Helper: Clean DataFrame for mplfinance
-# ----------------------------
-def clean_mplfinance_df(df):
-    """Ensure all OHLC data are numeric floats, drop NaNs/inf, safe for mplfinance"""
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
+def pattern_annotation(pattern):
+    """
+    Converts pattern dict into Substack-ready text.
+    Includes breakout confirmation and confidence ranking.
+    """
+    if not pattern:
+        return "No significant pattern detected."
 
-    # Keep only required columns
-    columns = ["Open", "High", "Low", "Close"]
-    if "Volume" in df.columns:
-        columns.append("Volume")
+    score = pattern.get("score", 0)
+    confidence = (
+        "High" if score >= 0.8 else
+        "Moderate" if score >= 0.65 else
+        "Low"
+    )
 
-    clean_df = df[columns].copy()
-    clean_df = clean_df.apply(pd.to_numeric, errors='coerce')
-    clean_df = clean_df.replace([np.inf, -np.inf], np.nan).dropna()
-    clean_df.index = pd.to_datetime(clean_df.index)
-    return clean_df
+    text = f"**{pattern['type'].replace('_', ' ').title()}** detected "
+
+    breakout = pattern.get("breakout", {})
+    if breakout.get("confirmed"):
+        text += (
+            f"with a confirmed breakout "
+            f"{breakout.get('bars_after', '?')} bars later "
+            f"on {breakout.get('volume_ratio', '?')}× average volume. "
+        )
+    else:
+        text += "but without a confirmed breakout yet. "
+
+    text += f"Overall confidence: **{confidence}**."
+    return text
 
 # ----------------------------
-# Pattern Detector
+# Pattern Detection Class
 # ----------------------------
 class PatternDetector:
     """
-    Detects common chart patterns: Head & Shoulders, Double Top/Bottom,
-    Triangles, Flags/Pennants, Cup & Handle, Price Channels.
-    Each method returns a dictionary with pattern info or None if not found.
+    Detects common technical patterns:
+      - Head & Shoulders
+      - Double Top/Bottom
+      - Triangles
+      - Flags/Pennants
+      - Cup & Handle
+      - Price Channels
 
-    REMARKS:
-    - Adjust prominence in `find_peaks_troughs` to control sensitivity
-    - Change min_cup_length, handle_ratio for Cup & Handle tuning
-    - window sizes in triangles/flags control how far back patterns are searched
+    Each detection returns a dictionary with:
+      - 'type': pattern type
+      - indices for plotting
+      - 'score': confidence 0–1
+      - optional breakout info
     """
+
     def __init__(self, df):
         self.df = df
         self.closes = df['Close'].values
         self.highs = df['High'].values
         self.lows = df['Low'].values
-        self.volume = df['Volume'].values if 'Volume' in df.columns else np.ones(len(df))
+        self.volumes = df['Volume'].values if 'Volume' in df.columns else np.ones(len(df))
 
-    def find_peaks_troughs(self, prominence=0.02, distance=5):
-        """Find significant peaks/troughs; increase prominence for fewer, stronger signals"""
+    # ------------------------
+    # Helper for peak/trough detection
+    # ------------------------
+    def find_peaks_troughs(self, prominence=0.02):
         price_range = np.max(self.closes) - np.min(self.closes)
         min_prominence = prominence * price_range
-        peaks, _ = find_peaks(self.highs, prominence=min_prominence, distance=distance)
-        troughs, _ = find_peaks(-self.lows, prominence=min_prominence, distance=distance)
+        peaks, _ = find_peaks(self.highs, prominence=min_prominence, distance=5)
+        troughs, _ = find_peaks(-self.lows, prominence=min_prominence, distance=5)
         return peaks, troughs
 
+    def _calculate_trendline_slope(self, indices, values):
+        if len(indices) < 2:
+            return 0
+        x = np.array(indices).reshape(-1,1)
+        y = values[indices]
+        return LinearRegression().fit(x,y).coef_[0]
+
+    # ------------------------
+    # Pattern Detectors
+    # ------------------------
     def detect_head_shoulders(self):
-        """Detect Head & Shoulders pattern"""
         peaks, _ = self.find_peaks_troughs()
         if len(peaks) < 3:
             return None
+
         for i in range(len(peaks)-2):
             left, head, right = peaks[i:i+3]
-            # Head higher than shoulders, shoulders roughly equal
             if (self.highs[head] > self.highs[left] and 
                 self.highs[head] > self.highs[right] and
                 abs(self.highs[left]-self.highs[right]) < 0.05*self.highs[head]):
+
+                # Score based on head height vs shoulders
+                shoulder_avg = (self.highs[left]+self.highs[right])/2
+                score = min(1.0, (self.highs[head]-shoulder_avg)/self.highs[head]*2)
                 return {
-                    'type': 'head_shoulders',
-                    'left_shoulder': left,
-                    'head': head,
-                    'right_shoulder': right,
+                    'type':'head_shoulders',
+                    'left_shoulder':left,
+                    'head':head,
+                    'right_shoulder':right,
                     'neckline': min(self.lows[left:right+1]),
-                    'score': 0.75  # Base confidence; could add more metrics
+                    'score': score,
+                    'breakout': self._check_breakout(min(self.lows[left:right+1]), right)
                 }
         return None
 
     def detect_double_top_bottom(self):
-        """Detect Double Top/Bottom"""
         peaks, troughs = self.find_peaks_troughs()
         # Double Top
-        if len(peaks) >= 2:
+        if len(peaks)>=2:
             for i in range(len(peaks)-1):
-                p1, p2 = peaks[i], peaks[i+1]
+                p1,p2 = peaks[i],peaks[i+1]
                 if abs(self.highs[p1]-self.highs[p2]) < 0.03*self.highs[p1]:
+                    score = 0.7 + 0.3*(len(peaks)/10)  # Example scoring
                     return {'type':'double_top','peak1':p1,'peak2':p2,
-                            'support':min(self.lows[p1:p2+1]),'score':0.7}
+                            'support':min(self.lows[p1:p2+1]),'score':score,
+                            'breakout': self._check_breakout(min(self.lows[p1:p2+1]),p2)}
         # Double Bottom
-        if len(troughs) >= 2:
+        if len(troughs)>=2:
             for i in range(len(troughs)-1):
-                t1, t2 = troughs[i], troughs[i+1]
-                if abs(self.lows[t1]-self.lows[t2]) < 0.03*self.lows[t1]:
+                t1,t2 = troughs[i],troughs[i+1]
+                if abs(self.lows[t1]-self.lows[t2])<0.03*self.lows[t1]:
+                    score = 0.7 + 0.3*(len(troughs)/10)
                     return {'type':'double_bottom','trough1':t1,'trough2':t2,
-                            'resistance':max(self.highs[t1:t2+1]),'score':0.7}
+                            'resistance':max(self.highs[t1:t2+1]),'score':score,
+                            'breakout': self._check_breakout(max(self.highs[t1:t2+1]),t2)}
         return None
 
     def detect_triangle(self, window=20):
-        """Detect Triangles: symmetrical, ascending, descending"""
-        if len(self.closes)<window: return None
+        if len(self.closes)<window:
+            return None
         peaks, troughs = self.find_peaks_troughs()
         recent_peaks = peaks[peaks>=len(self.closes)-window]
         recent_troughs = troughs[troughs>=len(self.closes)-window]
         if len(recent_peaks)>=2 and len(recent_troughs)>=2:
             peak_slope = self._calculate_trendline_slope(recent_peaks,self.highs)
             trough_slope = self._calculate_trendline_slope(recent_troughs,self.lows)
+            triangle_type='symmetrical_triangle'
             if abs(peak_slope)<0.001 and trough_slope>0:
-                return {'type':'ascending_triangle','peaks':recent_peaks,'troughs':recent_troughs,'score':0.65}
+                triangle_type='ascending_triangle'
             elif peak_slope<0 and abs(trough_slope)<0.001:
-                return {'type':'descending_triangle','peaks':recent_peaks,'troughs':recent_troughs,'score':0.65}
-            elif peak_slope<0 and trough_slope>0:
-                return {'type':'symmetrical_triangle','peaks':recent_peaks,'troughs':recent_troughs,'score':0.7}
+                triangle_type='descending_triangle'
+            score = min(1.0, len(recent_peaks)/window + len(recent_troughs)/window)
+            return {'type':triangle_type,'peaks':recent_peaks,'troughs':recent_troughs,'score':score}
         return None
 
-    def _calculate_trendline_slope(self, indices, values):
-        if len(indices)<2: return 0
-        x = np.array(indices).reshape(-1,1)
-        y = values[indices]
-        reg = LinearRegression().fit(x,y)
-        return reg.coef_[0]
-
     def detect_flag_pennant(self, window=15):
-        """Flag / Pennant detection: adjust window or 5% threshold for sensitivity"""
-        if len(self.closes)<window*2: return None
-        recent = self.closes[-window:]
-        prev = self.closes[-window*2:-window]
-        pole_move = (recent[0]-prev[0])/prev[0]
-        if abs(pole_move)>0.05:
-            volatility = np.std(recent)/np.mean(recent)
-            if volatility<0.03:
-                return {'type':'flag' if pole_move>0 else 'bear_flag',
-                        'pole_start':len(self.closes)-window*2,
-                        'flag_start':len(self.closes)-window,
-                        'pole_move':pole_move,'score':0.65}
+        if len(self.closes)<window*2:
+            return None
+        recent=self.closes[-window:]
+        prev=self.closes[-window*2:-window]
+        pole_move=(recent[0]-prev[0])/prev[0]
+        volatility=np.std(recent)/np.mean(recent)
+        if abs(pole_move)>0.05 and volatility<0.03:
+            score=min(1.0, abs(pole_move)*5)
+            return {'type':'flag' if pole_move>0 else 'bear_flag',
+                    'flag_start':len(self.closes)-window,'pole_start':len(self.closes)-window*2,
+                    'score':score,'breakout': self._check_breakout(recent[-1], len(self.closes)-1)}
         return None
 
     def detect_cup_handle(self,min_cup_length=30,handle_ratio=0.3):
-        """Cup & Handle detection: tune min_cup_length/handle_ratio for smaller/larger cups"""
-        if len(self.closes)<min_cup_length+10: return None
-        for start in range(len(self.closes)-min_cup_length):
-            end = start+min_cup_length
-            cup = self.closes[start:end]
-            bottom_idx = start+np.argmin(cup)
-            left = cup[:bottom_idx-start]; right=cup[bottom_idx-start:]
-            if len(left)<5 or len(right)<5: continue
-            if abs(cup[0]-cup[-1])>0.05*cup[0]: continue
-            handle_start = end; max_handle=int(min_cup_length*handle_ratio)
-            if handle_start+max_handle>len(self.closes): continue
-            cup_bottom = self.closes[bottom_idx]; cup_top=max(cup[0],cup[-1]); upper_third=cup_bottom+0.67*(cup_top-cup_bottom)
-            for handle_end in range(handle_start+5,min(handle_start+max_handle,len(self.closes))):
+        if len(self.closes)<min_cup_length+10:
+            return None
+        for start_idx in range(len(self.closes)-min_cup_length):
+            end_idx=start_idx+min_cup_length
+            cup_data=self.closes[start_idx:end_idx]
+            bottom_idx=start_idx+np.argmin(cup_data)
+            left_side=cup_data[:bottom_idx-start_idx]
+            right_side=cup_data[bottom_idx-start_idx:]
+            if len(left_side)<5 or len(right_side)<5:
+                continue
+            if abs(self.closes[start_idx]-self.closes[end_idx-1])>0.05*self.closes[start_idx]:
+                continue
+            handle_start=end_idx
+            max_handle_length=int(min_cup_length*handle_ratio)
+            if handle_start+max_handle_length>len(self.closes):
+                continue
+            cup_bottom=self.closes[bottom_idx]
+            cup_top=max(self.closes[start_idx],self.closes[end_idx-1])
+            upper_third=cup_bottom+0.67*(cup_top-cup_bottom)
+            for handle_end in range(handle_start+5,min(handle_start+max_handle_length,len(self.closes))):
                 handle_data=self.closes[handle_start:handle_end]
                 if np.min(handle_data)>upper_third and handle_data[-1]<handle_data[0] and abs(handle_data[-1]-handle_data[0])<0.03*handle_data[0]:
-                    return {'type':'cup_handle','cup_start':start,'cup_bottom':bottom_idx,'cup_end':end-1,
-                            'handle_start':handle_start,'handle_end':handle_end,'rim_level':cup_top,'score':0.75}
+                    score=0.7 + 0.3*((end_idx-start_idx)/min_cup_length)
+                    return {'type':'cup_handle','cup_start':start_idx,'cup_bottom':bottom_idx,'cup_end':end_idx-1,
+                            'handle_start':handle_start,'handle_end':handle_end,'rim_level':cup_top,'score':score,
+                            'breakout': self._check_breakout(cup_top, handle_end)}
         return None
 
-    def detect_price_channels(self,min_touches=3,parallel_tolerance=0.02,lookback_period=60):
-        """Detect price channels: adjust min_touches for strictness, parallel_tolerance for width tolerance"""
-        start_idx = max(0,len(self.closes)-lookback_period)
-        recent_highs = self.highs[start_idx:]
-        recent_lows = self.lows[start_idx:]
-        temp = PatternDetector.__new__(PatternDetector)
-        temp.highs = recent_highs; temp.lows=recent_lows; temp.closes=self.closes[start_idx:]
-        peaks,troughs=temp.find_peaks_troughs(prominence=0.015)
-        if len(peaks)<min_touches or len(troughs)<min_touches: return None
-        peaks += start_idx; troughs += start_idx
-        for i in range(len(peaks)-min_touches+1):
-            upper = peaks[i:i+min_touches]
-            upper_slope = self._calculate_trendline_slope(upper,self.highs)
-            upper_intercept = self.highs[upper[0]] - upper_slope*upper[0]
-            for j in range(len(troughs)-min_touches+1):
-                lower=troughs[j:j+min_touches]
-                lower_slope=self._calculate_trendline_slope(lower,self.lows)
-                lower_intercept=self.lows[lower[0]]-lower_slope*lower[0]
-                slope_diff=abs(upper_slope-lower_slope)
-                avg_slope=abs(upper_slope+lower_slope)/2
-                if avg_slope==0 or slope_diff/avg_slope<parallel_tolerance:
-                    mid=(upper[-1]+lower[-1])/2
-                    upper_level=upper_slope*mid+upper_intercept
-                    lower_level=lower_slope*mid+lower_intercept
-                    channel_width=upper_level-lower_level
-                    if abs(upper_slope)<0.01: ch_type='horizontal_channel'
-                    elif upper_slope>0: ch_type='ascending_channel'
-                    else: ch_type='descending_channel'
-                    return {'type':ch_type,'upper_points':upper,'lower_points':lower,
-                            'upper_slope':upper_slope,'upper_intercept':upper_intercept,
-                            'lower_slope':lower_slope,'lower_intercept':lower_intercept,
-                            'channel_width':channel_width,'start_idx':max(min(upper[0],lower[0]),start_idx),
-                            'end_idx':max(upper[-1],lower[-1]),'lookback_start':start_idx,'score':0.7}
-        return None
+    def _check_breakout(self, level, idx):
+        """
+        Simple breakout check: did price close above/below the level in last 3 bars?
+        Returns dict with 'confirmed', 'bars_after', 'volume_ratio'
+        """
+        if idx+1 >= len(self.closes):
+            return {'confirmed':False}
+        lookahead = self.closes[idx+1:idx+4]
+        if len(lookahead)==0:
+            return {'confirmed':False}
+        confirmed = any((lookahead>level) if self.closes[idx]>level else (lookahead<level))
+        bars_after = np.argmax((lookahead>level) if self.closes[idx]>level else (lookahead<level))+1 if confirmed else None
+        volume_ratio = self.volumes[idx+1:idx+4].mean()/np.mean(self.volumes) if confirmed else None
+        return {'confirmed':confirmed,'bars_after':bars_after,'volume_ratio':volume_ratio}
 
 # ----------------------------
-# Pattern annotation for Substack
+# Plotting Functions
 # ----------------------------
-def pattern_annotation(pattern):
-    """Convert pattern dict into Substack-ready text with confidence and breakout info"""
-    if not pattern: return ""
-    score = pattern.get("score",0)
-    confidence = "High" if score>=0.8 else "Moderate" if score>=0.65 else "Low"
-    text = f"**{pattern['type'].replace('_',' ').title()}** detected "
-    if "breakout" in pattern and pattern["breakout"].get("confirmed",False):
-        text += (f"with a confirmed breakout {pattern['breakout']['bars_after']} bars later "
-                 f"on {pattern['breakout']['volume_ratio']}× average volume. ")
-    else:
-        text += "but without a confirmed breakout yet. "
-    text += f"Overall confidence: **{confidence}**."
-    return text
-
-# ----------------------------
-# Simple chart plotting
-# ----------------------------
-def plot_simple_chart(clean_df, symbol, company_name):
-    """Plot clean OHLC chart without pattern overlays"""
+def plot_simple_chart(df,symbol,company_name):
+    """Plain candlestick chart without patterns"""
     fig, axes = mpf.plot(
-        clean_df,
-        type="candle",
-        style="yahoo",
+        df,
+        type='candle',
+        style='yahoo',
         title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
         figsize=(16,9),
         returnfig=True,
@@ -253,82 +248,93 @@ def plot_simple_chart(clean_df, symbol, company_name):
     fig.savefig(f"charts/{symbol}_1y.png",dpi=300,bbox_inches='tight')
     plt.close(fig)
 
-# ----------------------------
-# Chart with patterns & legend
-# ----------------------------
-def plot_with_patterns_and_legend(clean_df,symbol,company_name,patterns):
-    """Plot chart with pattern overlays and semi-transparent legend"""
-    addplots=[]; legend_items=[]; legend_colors=[]
+def plot_with_pattern(df,symbol,company_name,pattern):
+    """Candlestick chart with top pattern plotted"""
+    addplots=[]
+    legend_items=[]
+    if not pattern:
+        plot_simple_chart(df,symbol,company_name)
+        return
 
-    # === build addplots and legend_items here as before ===
-    # (H&S, double tops/bottoms, triangles, flags, cup&handle, channels)
-    # For demonstration, this snippet leaves addplots empty if no patterns detected
+    # Example: for H&S or double top, draw lines
+    if pattern['type']=='head_shoulders':
+        neckline=np.full(len(df),np.nan)
+        ls,rs=pattern['left_shoulder'],pattern['right_shoulder']
+        for i in range(max(0,ls-5),min(rs+15,len(df))):
+            neckline[i]=pattern['neckline']
+        addplots.append(mpf.make_addplot(neckline,color='red',linestyle='--',width=2))
+        legend_items.append('Head & Shoulders')
 
-    mpf_kwargs = dict(
-        type="candle",
-        style="yahoo",
-        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
+    if pattern['type']=='double_top':
+        peak1,peak2=pattern['peak1'],pattern['peak2']
+        resistance=np.full(len(df),np.nan)
+        for i in range(max(0,peak1-5),min(peak2+15,len(df))):
+            resistance[i]=max(df['High'].iloc[peak1],df['High'].iloc[peak2])
+        addplots.append(mpf.make_addplot(resistance,color='blue',linestyle='--',width=2))
+        legend_items.append('Double Top')
+
+    # More plotting for other patterns can be added similarly...
+
+    fig, axes = mpf.plot(
+        df,
+        type='candle',
+        style='yahoo',
+        addplot=addplots if addplots else None,
+        title=f"{company_name} ({symbol}) — Top Pattern: {pattern['type'].replace('_',' ').title()}",
         figsize=(16,9),
         returnfig=True,
         tight_layout=True
     )
 
-    if addplots:  # ONLY include addplot if non-empty
-        mpf_kwargs["addplot"] = addplots
-
-    fig, axes = mpf.plot(clean_df, **mpf_kwargs)
-
     if legend_items:
-        import matplotlib.patches as mpatches
-        legend_patches = [mpatches.Patch(color=color,label=item)
-                          for item,color in zip(legend_items,legend_colors)]
-        axes[0].legend(handles=legend_patches,
-                       loc='upper left',
-                       bbox_to_anchor=(0.02,0.98),
-                       frameon=True,
-                       fancybox=True,
-                       shadow=False,
-                       fontsize=9,
-                       framealpha=0.7,
-                       edgecolor='gray',
-                       facecolor='white')
-        print(f"{symbol}: {', '.join(legend_items)}")
-    else:
-        print(f"{symbol}: No patterns detected")
-
+        legend_patches=[mpatches.Patch(color='red',label=legend_items[0])] # Extend for multiple
+        axes[0].legend(handles=legend_patches,loc='upper left',framealpha=0.7)
     fig.savefig(f"charts/{symbol}_1y_patterns.png",dpi=300,bbox_inches='tight')
     plt.close(fig)
-    return legend_items
-
 
 # ----------------------------
-# Main loop: download, clean, detect, plot
+# Main Loop
 # ----------------------------
 for symbol in symbols:
     print(f"Processing {symbol}...")
-    company_name = get_company_name(symbol)
+    company_name=get_company_name(symbol)
     print(f"Company: {company_name}")
 
-    # Download
-    df = yf.download(symbol,period="1y",interval="1d",auto_adjust=False,progress=False)
-    if df.empty:
-        print(f"{symbol}: No data retrieved. Skipping.")
-        continue
+    df=yf.download(symbol,period='1y',interval='1d',auto_adjust=False,progress=False)
+    df=df.dropna()
+    if isinstance(df.columns,pd.MultiIndex):
+        df.columns=df.columns.get_level_values(0)
 
-    clean_df = clean_mplfinance_df(df)
-    if len(clean_df)<20:
-        print(f"{symbol}: Not enough valid data points. Skipping.")
-        continue
+    clean_df=pd.DataFrame({
+        'Open':df['Open'].to_numpy().astype('float64'),
+        'High':df['High'].to_numpy().astype('float64'),
+        'Low':df['Low'].to_numpy().astype('float64'),
+        'Close':df['Close'].to_numpy().astype('float64'),
+        'Volume':df['Volume'].to_numpy().astype('float64')
+    }, index=pd.to_datetime(df.index))
 
-    # Simple chart
+    # Plain chart
     plot_simple_chart(clean_df,symbol,company_name)
+    print(f"{symbol}: Plain chart saved.")
 
-    # Chart with patterns
+    # Detect patterns
     detector=PatternDetector(clean_df)
-    patterns=[detector.detect_head_shoulders(),
-              detector.detect_double_top_bottom(),
-              detector.detect_triangle(),
-              detector.detect_flag_pennant(),
-              detector.detect_cup_handle(),
-              detector.detect_price_channels()]
-    plot_with_patterns_and_legend(clean_df,symbol,company_name,patterns)
+    detected_patterns=[
+        detector.detect_head_shoulders(),
+        detector.detect_double_top_bottom(),
+        detector.detect_triangle(),
+        detector.detect_flag_pennant(),
+        detector.detect_cup_handle()
+    ]
+    # Keep only non-None
+    detected_patterns=[p for p in detected_patterns if p]
+
+    # Rank patterns by score
+    top_pattern=max(detected_patterns,key=lambda x:x.get('score',0)) if detected_patterns else None
+
+    # Plot top pattern chart
+    plot_with_pattern(clean_df,symbol,company_name,top_pattern)
+
+    # Generate Substack annotation
+    annotation=pattern_annotation(top_pattern)
+    print(f"{symbol} annotation: {annotation}")
