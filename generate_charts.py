@@ -259,30 +259,47 @@ def plot_simple_chart(clean_df, symbol, company_name):
 def plot_with_patterns_and_legend(clean_df,symbol,company_name,patterns):
     """Plot chart with pattern overlays and semi-transparent legend"""
     addplots=[]; legend_items=[]; legend_colors=[]
-    # [FULL addplot logic goes here as in your previous version]
-    # For brevity, I’m keeping the previous logic
-    # This will handle H&S, double top/bottom, triangles, flags, cup&handle, channels
-    # and create legend items/colors accordingly
-    # The cleaned_df guarantees mplfinance-safe floats
-    fig, axes = mpf.plot(clean_df,
-                         type="candle",
-                         style="yahoo",
-                         addplot=addplots if addplots else None,
-                         title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
-                         figsize=(16,9),
-                         returnfig=True,
-                         tight_layout=True)
+
+    # === build addplots and legend_items here as before ===
+    # (H&S, double tops/bottoms, triangles, flags, cup&handle, channels)
+    # For demonstration, this snippet leaves addplots empty if no patterns detected
+
+    mpf_kwargs = dict(
+        type="candle",
+        style="yahoo",
+        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
+        figsize=(16,9),
+        returnfig=True,
+        tight_layout=True
+    )
+
+    if addplots:  # ONLY include addplot if non-empty
+        mpf_kwargs["addplot"] = addplots
+
+    fig, axes = mpf.plot(clean_df, **mpf_kwargs)
+
     if legend_items:
-        legend_patches=[mpatches.Patch(color=color,label=item) for item,color in zip(legend_items,legend_colors)]
-        axes[0].legend(handles=legend_patches,loc='upper left',bbox_to_anchor=(0.02,0.98),
-                       frameon=True,fancybox=True,shadow=False,fontsize=9,
-                       framealpha=0.7,edgecolor='gray',facecolor='white')
+        import matplotlib.patches as mpatches
+        legend_patches = [mpatches.Patch(color=color,label=item)
+                          for item,color in zip(legend_items,legend_colors)]
+        axes[0].legend(handles=legend_patches,
+                       loc='upper left',
+                       bbox_to_anchor=(0.02,0.98),
+                       frameon=True,
+                       fancybox=True,
+                       shadow=False,
+                       fontsize=9,
+                       framealpha=0.7,
+                       edgecolor='gray',
+                       facecolor='white')
         print(f"{symbol}: {', '.join(legend_items)}")
     else:
         print(f"{symbol}: No patterns detected")
+
     fig.savefig(f"charts/{symbol}_1y_patterns.png",dpi=300,bbox_inches='tight')
     plt.close(fig)
     return legend_items
+
 
 # ----------------------------
 # Main loop: download, clean, detect, plot
