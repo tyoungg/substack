@@ -314,6 +314,62 @@ class PatternDetector:
         
         return None
 
+    def detect_regime_start(self, window=21, std_dev_threshold=2.0):
+        """Detects a regime start, defined as a significant price change."""
+        price_changes = self.df['Close'].pct_change().abs()
+        rolling_std = price_changes.rolling(window=window).std()
+
+        # Find points where the change exceeds the threshold
+        regime_starts = price_changes[price_changes > std_dev_threshold * rolling_std]
+
+        if not regime_starts.empty:
+            # Get the index of the first detected start
+            start_index = self.df.index.get_loc(regime_starts.index[0])
+            return {
+                'type': 'regime_start',
+                'index': start_index,
+                'date': regime_starts.index[0]
+            }
+        return None
+
+    def detect_threat_line(self, lookback=30):
+        """Detects a threat line connecting the last two significant peaks or troughs."""
+        recent_highs = self.highs[-lookback:]
+        recent_lows = self.lows[-lookback:]
+
+        peaks, _ = find_peaks(recent_highs, prominence=(np.max(recent_highs) - np.min(recent_highs)) * 0.05, distance=3)
+        troughs, _ = find_peaks(-recent_lows, prominence=(np.max(recent_lows) - np.min(recent_lows)) * 0.05, distance=3)
+
+        # Adjust indices to the full dataframe
+        offset = len(self.highs) - lookback
+        peaks = [p + offset for p in peaks]
+        troughs = [t + offset for t in troughs]
+
+        # Determine trend direction (simple slope over the lookback period)
+        x = np.arange(lookback)
+        y = self.closes[-lookback:]
+        slope = np.polyfit(x, y, 1)[0]
+
+        if slope > 0 and len(troughs) >= 2: # Uptrend, connect troughs
+            p1, p2 = troughs[-2], troughs[-1]
+            line_slope = (self.lows[p2] - self.lows[p1]) / (p2 - p1)
+            intercept = self.lows[p1] - line_slope * p1
+            return {
+                'type': 'threat_line_support',
+                'p1': p1, 'p2': p2,
+                'slope': line_slope, 'intercept': intercept
+            }
+        elif slope < 0 and len(peaks) >= 2: # Downtrend, connect peaks
+            p1, p2 = peaks[-2], peaks[-1]
+            line_slope = (self.highs[p2] - self.highs[p1]) / (p2 - p1)
+            intercept = self.highs[p1] - line_slope * p1
+            return {
+                'type': 'threat_line_resistance',
+                'p1': p1, 'p2': p2,
+                'slope': line_slope, 'intercept': intercept
+            }
+        return None
+
 # ----------------------------
 # Date axis customization 
 # ----------------------------
@@ -370,6 +426,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     addplots = []
     legend_items = []
     legend_colors = []
+    deferred_drawings = []
     
     for pattern in patterns:
         if pattern is None:
@@ -516,6 +573,28 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
             legend_items.append(channel_name)
             legend_colors.append('cyan')
 
+        elif 'threat_line' in pattern['type']:
+            p1 = pattern['p1']
+            slope = pattern['slope']
+            intercept = pattern['intercept']
+
+            # Draw line from the first point to the end of the chart
+            line_values = np.full(len(clean_df), np.nan)
+            for i in range(p1, len(clean_df)):
+                line_values[i] = slope * i + intercept
+
+            addplots.append(mpf.make_addplot(line_values, color='black', linestyle=':', width=2))
+            legend_items.append("Threat Line")
+            legend_colors.append('black')
+
+        elif pattern['type'] == 'regime_start':
+            start_index = pattern['index']
+            deferred_drawings.append(
+                lambda ax: ax.axvline(x=start_index, color='magenta', linestyle='--', linewidth=2)
+            )
+            legend_items.append("Regime Start")
+            legend_colors.append('magenta')
+
     # Create plot without saving yet
     fig, axes = mpf.plot(
         clean_df,
@@ -527,6 +606,10 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
         returnfig=True,  # This returns the figure so we can add legend
         tight_layout=True,
     )
+
+    # Execute deferred drawings
+    for draw_func in deferred_drawings:
+        draw_func(axes[0])
     
     # Customize x-axis BEFORE adding legend
 #    customize_date_axis(axes[0], clean_df)
@@ -609,7 +692,9 @@ for symbol in symbols:
                 detector.detect_triangle(),
                 detector.detect_flag_pennant(),
                 detector.detect_cup_handle(),
-                detector.detect_price_channels()
+                detector.detect_price_channels(),
+                detector.detect_regime_start(),
+                detector.detect_threat_line()
             ]
 
             # Plot with patterns and company name - FIXED: Added company_name parameter
