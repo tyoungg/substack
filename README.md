@@ -53,12 +53,20 @@ The script uses the `yfinance` library to download historical stock data for the
 
 When `enable_patterns` is set to `true` in `symbols.yaml`, the script uses the `PatternDetector` class to analyze the data for the following technical patterns:
 
+### Detected Patterns
+
 - **Head and Shoulders**: Identifies a specific chart formation that predicts a bullish-to-bearish trend reversal.
 - **Double Top and Double Bottom**: Chart patterns that occur when a stock price reaches a certain level twice and is unable to break through.
 - **Triangles**: Formations that occur when the price of a stock is consolidating. The script can identify ascending, descending, and symmetrical triangles.
 - **Flags**: Short-term continuation patterns that occur after a sharp price movement.
 - **Cup and Handle**: A bullish continuation pattern that resembles a cup with a handle.
-- **Price Channels**: Two parallel trendlines that contain the price of a stock.
+- **Price Channels / Channel**: Two parallel trendlines that contain the price of a stock, representing a controlled trend.
+- **Trendline**: Indicates directional pressure.
+- **Horizontal Zone**: Shows price memory.
+- **Shelf**: Indicates consolidation.
+- **Regime Start**: Marks a context reset.
+- **Threat Line**: Represents a risk boundary.
+
 
 If any of these patterns are detected, they are drawn on the chart, and a legend is added to identify them.
 
