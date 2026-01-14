@@ -13,6 +13,30 @@
     .fname { font-size: 12px; color:#444; margin-top:6px; word-break:break-word; text-align:center; }
     .notice { color:#666; font-size:14px; margin-bottom:12px; }
     a.repo { font-size:13px }
+
+  details {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #fafafa;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  details[open] {
+    background: #f5f7fa;
+  }
+
+  details p {
+    margin: 0.5rem 0 0;
+    color: #333;
+  }
+
+
   </style>
 </head>
 <body>
@@ -77,43 +101,98 @@
   </div>
 
   <p style="margin-top:20px;font-size:13px">Repo: <a class="repo" href="https://github.com/tyoungg/substack">tyoungg/substack</a>
-<h2>Detected Patterns</h2>
-<ul>
-  <li>
-    <strong>Head and Shoulders</strong>: Identifies a specific chart formation that predicts a bullish-to-bearish trend reversal.
-  </li>
-  <li>
-    <strong>Double Top and Double Bottom</strong>: Chart patterns that occur when a stock price reaches a certain level twice and is unable to break through.
-  </li>
-  <li>
-    <strong>Triangles</strong>: Formations that occur when the price of a stock is consolidating. The script can identify ascending, descending, and symmetrical triangles.
-  </li>
-  <li>
-    <strong>Flags</strong>: Short-term continuation patterns that occur after a sharp price movement.
-  </li>
-  <li>
-    <strong>Cup and Handle</strong>: A bullish continuation pattern that resembles a cup with a handle.
-  </li>
-  <li>
-    <strong>Price Channels / Channel</strong>: Two parallel trendlines that contain the price of a stock, representing a controlled trend.
-  </li>
-  <li>
-    <strong>Trendline</strong>: Indicates directional pressure.
-  </li>
-  <li>
-    <strong>Horizontal Zone</strong>: Shows price memory.
-  </li>
-  <li>
-    <strong>Shelf</strong>: Indicates consolidation.
-  </li>
-  <li>
-    <strong>Regime Start</strong>: Marks a context reset.
-  </li>
-  <li>
-    <strong>Threat Line</strong>: Represents a risk boundary.
-  </li>
-</ul>
 
+<h2>Detected Patterns</h2>
+
+<details>
+  <summary><strong>Head and Shoulders</strong></summary>
+  <p>
+    Identifies a chart formation that often signals a bullish-to-bearish trend reversal.
+    It is commonly used to anticipate potential breakdowns after an extended uptrend.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Double Top and Double Bottom</strong></summary>
+  <p>
+    Patterns that form when price tests the same level twice without breaking through.
+    These often suggest exhaustion and a potential reversal at key support or resistance.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Triangles</strong></summary>
+  <p>
+    Consolidation formations where price range contracts over time.
+    Ascending, descending, and symmetrical triangles often precede volatility expansion.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Flags</strong></summary>
+  <p>
+    Short-term continuation patterns that form after a sharp price move.
+    They typically represent brief pauses before the prevailing trend resumes.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Cup and Handle</strong></summary>
+  <p>
+    A bullish continuation pattern resembling a rounded base followed by shallow consolidation.
+    It is often used to identify breakout opportunities within longer-term uptrends.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Price Channels / Channel</strong></summary>
+  <p>
+    Two parallel trendlines that contain price movement within a controlled trend.
+    Channels help visualize trend strength and potential support and resistance zones.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Trendline</strong></summary>
+  <p>
+    A line connecting key highs or lows to indicate directional pressure.
+    Breaks in trendlines may signal shifts in momentum or regime.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Horizontal Zone</strong></summary>
+  <p>
+    Represents areas of price memory where trading activity previously clustered.
+    These zones often act as support or resistance when revisited.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Shelf</strong></summary>
+  <p>
+    A period of sideways consolidation following directional movement.
+    Shelves often precede either continuation or rejection depending on context.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Regime Start</strong></summary>
+  <p>
+    Marks a contextual reset in market behavior or structure.
+    It is useful for segmenting analysis and avoiding assumptions based on prior conditions.
+  </p>
+</details>
+
+<details>
+  <summary><strong>Threat Line</strong></summary>
+  <p>
+    A boundary representing elevated risk to the current pattern or bias.
+    A breach of the threat line may invalidate the prevailing interpretation.
+  </p>
+</details>
+	  
+	  
   </p>
 </body>
 </html>
