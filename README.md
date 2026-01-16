@@ -44,6 +44,9 @@ This project is a Python script that generates financial charts for a list of st
    - Open the `symbols.yaml` file.
    - Add or remove symbols from the `symbols` list.
 
+3. **Enable or disable pattern detection:**
+   - Open the `symbols.yaml` file.
+   - Set `enable_patterns` to `true` to enable pattern detection, or `false` to disable it.
 ### Generating a Chart for a Single Symbol
 
 1. **Specify the stock symbol:**
