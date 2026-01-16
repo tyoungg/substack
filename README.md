@@ -59,6 +59,16 @@ This project is a Python script that generates financial charts for a list of st
    ```
    The generated chart will be saved in the `charts` directory.
 
+### Generating a Chart via GitHub Actions
+
+1.  Navigate to the **Actions** tab of the repository on GitHub.
+2.  In the left sidebar, click on the **Single Symbol Chart Generation** workflow.
+3.  Click the **Run workflow** dropdown button.
+4.  Enter the stock symbol you want to analyze in the **Stock Symbol** input field.
+5.  Click the **Run workflow** button to start the process.
+
+The workflow will generate the chart and commit it to the `charts` directory in the repository.
+
 
 ## How It Works
 
