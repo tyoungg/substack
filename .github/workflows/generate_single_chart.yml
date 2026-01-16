@@ -23,7 +23,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Update symbol in YAML
-        run: echo "symbol: ${{ github.event.inputs.symbol }}" > single_symbol.yaml
+        run: |
+          echo "symbol: ${{ github.event.inputs.symbol }}" > single_symbol.yaml
 
       - name: Generate chart
         run: python generate_single_chart.py
@@ -32,6 +33,6 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add charts/${{ github.event.inputs.symbol }}_1y_patterns.png
+          git add "charts/${{ github.event.inputs.symbol }}_1y_patterns.png"
           git commit -m "Generate chart for ${{ github.event.inputs.symbol }}" || echo "No changes"
           git push
