@@ -32,6 +32,8 @@ This project is a Python script that generates financial charts for a list of st
 
 ## Usage
 
+### Generating Charts for Multiple Symbols
+
 1. **Run the script:**
    ```bash
    python generate_charts.py
@@ -42,9 +44,17 @@ This project is a Python script that generates financial charts for a list of st
    - Open the `symbols.yaml` file.
    - Add or remove symbols from the `symbols` list.
 
-3. **Enable or disable pattern detection:**
-   - Open the `symbols.yaml` file.
-   - Set `enable_patterns` to `true` to enable pattern detection, or `false` to disable it.
+### Generating a Chart for a Single Symbol
+
+1. **Specify the stock symbol:**
+   - Open the `single_symbol.yaml` file.
+   - Change the `symbol` to the stock you want to analyze.
+
+2. **Run the script:**
+   ```bash
+   python generate_single_chart.py
+   ```
+   The generated chart will be saved in the `charts` directory.
 
 
 ## How It Works
