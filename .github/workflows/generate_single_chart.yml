@@ -1,0 +1,37 @@
+name: Single Symbol Chart Generation
+
+on:
+  workflow_dispatch:
+    inputs:
+      symbol:
+        description: 'Stock Symbol'
+        required: true
+        default: 'SPY'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Update symbol in YAML
+        run: echo "symbol: ${{ github.event.inputs.symbol }}" > single_symbol.yaml
+
+      - name: Generate chart
+        run: python generate_single_chart.py
+
+      - name: Commit chart
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add charts/${{ github.event.inputs.symbol }}_1y_patterns.png
+          git commit -m "Generate chart for ${{ github.event.inputs.symbol }}" || echo "No changes"
+          git push
