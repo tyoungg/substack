@@ -6,7 +6,7 @@ on:
       symbol:
         description: 'Stock Symbol'
         required: true
-        default: 'SPY'
+        default: 'KR'
 
 jobs:
   build:
