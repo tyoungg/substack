@@ -254,7 +254,26 @@ class PatternDetector:
 # Plotting with patterns and legend
 # ----------------------------
 def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
-    """Plot chart with colored pattern lines and custom x-axis"""
+    """
+    Plots a financial chart with detected technical analysis patterns.
+
+    This function takes a DataFrame of stock data and a list of detected patterns,
+    then generates a candlestick chart with the patterns overlaid. It also creates
+    a legend for the plotted patterns.
+
+    Each pattern type has its own drawing logic and customizable appearance.
+    To customize a pattern's look, modify the arguments in the `mpf.make_addplot()`
+    call for that specific pattern. For example, to change the color of the
+    "Head & Shoulders" pattern, modify the `color` parameter.
+
+    Args:
+        clean_df (pd.DataFrame): DataFrame containing the stock data with columns
+                                 like 'High', 'Low', 'Close'.
+        symbol (str): The stock symbol.
+        company_name (str): The name of the company.
+        patterns (list): A list of dictionaries, where each dictionary represents
+                         a detected pattern and its key points.
+    """
     addplots = []
     legend_handles = []
     deferred_drawings = []
@@ -262,34 +281,87 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     for pattern in patterns:
         if pattern is None:
             continue
+
+        # ----------------------------------------------------------------------
+        # Head & Shoulders Pattern
+        # ----------------------------------------------------------------------
         if pattern['type'] == 'head_shoulders':
-            left_shoulder, right_shoulder = pattern['left_shoulder'], pattern['right_shoulder']
-            neckline_val = min(clean_df['Low'].iloc[left_shoulder:right_shoulder+1])
-            neckline = np.full(len(clean_df), np.nan)
-            for i in range(max(0, left_shoulder - 5), min(right_shoulder + 15, len(clean_df))):
-                neckline[i] = neckline_val
-            addplots.append(mpf.make_addplot(neckline, color='red', linestyle='--', width=2))
-            legend_handles.append(plt.Line2D([], [], color='red', linestyle='--', label='Head & Shoulders'))
+            # --- Key points ---
+            left_shoulder_idx, head_idx, right_shoulder_idx = pattern['left_shoulder'], pattern['head'], pattern['right_shoulder']
+
+            # --- Visualization ---
+            # This line connects the peaks of the shoulders and the head.
+            #   - color: 'red' (customize the line color)
+            #   - marker: 'o' (customize the marker for the key points)
+            #   - linestyle: '-' (customize the line style, e.g., '--' for dashed)
+            shoulders_head_line = np.full(len(clean_df), np.nan)
+            shoulders_head_line[left_shoulder_idx] = clean_df['High'].iloc[left_shoulder_idx]
+            shoulders_head_line[head_idx] = clean_df['High'].iloc[head_idx]
+            shoulders_head_line[right_shoulder_idx] = clean_df['High'].iloc[right_shoulder_idx]
+            addplots.append(mpf.make_addplot(shoulders_head_line, color='red', marker='o', linestyle='-'))
+
+            # This part calculates and draws the neckline, connecting the troughs between the head and shoulders.
+            #   - color: 'red' (customize the line color)
+            #   - linestyle: '--' (customize the line style)
+            #   - width: 1.5 (customize the line thickness)
+            trough1_idx = left_shoulder_idx + np.argmin(clean_df['Low'].iloc[left_shoulder_idx:head_idx].values)
+            trough2_idx = head_idx + np.argmin(clean_df['Low'].iloc[head_idx:right_shoulder_idx].values)
+            slope = (clean_df['Low'].iloc[trough2_idx] - clean_df['Low'].iloc[trough1_idx]) / (trough2_idx - trough1_idx)
+            intercept = clean_df['Low'].iloc[trough1_idx] - slope * trough1_idx
+            neckline = [slope * i + intercept for i in range(len(clean_df))]
+            addplots.append(mpf.make_addplot(neckline, color='red', linestyle='--', width=1.5))
+
+            legend_handles.append(plt.Line2D([], [], color='red', linestyle='-', marker='o', label='Head & Shoulders'))
+
+        # ----------------------------------------------------------------------
+        # Double Top Pattern
+        # ----------------------------------------------------------------------
         elif pattern['type'] == 'double_top':
-            peak1, peak2 = pattern['peak1'], pattern['peak2']
-            resistance_val = max(clean_df['High'].iloc[peak1], clean_df['High'].iloc[peak2])
+            # --- Key points ---
+            peak1_idx, peak2_idx = pattern['peak1'], pattern['peak2']
+
+            # --- Visualization ---
+            # This line connects the two peaks of the double top.
+            #   - color: 'blue' (customize the line color)
+            #   - marker: 'o' (customize the marker for the peaks)
+            #   - linestyle: '-' (customize the line style)
+            #   - width: 2 (customize the line thickness)
             resistance_line = np.full(len(clean_df), np.nan)
-            for i in range(max(0, peak1 - 5), min(peak2 + 15, len(clean_df))):
-                resistance_line[i] = resistance_val
-            addplots.append(mpf.make_addplot(resistance_line, color='blue', linestyle='--', width=2))
-            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='--', label='Double Top'))
+            resistance_line[peak1_idx] = clean_df['High'].iloc[peak1_idx]
+            resistance_line[peak2_idx] = clean_df['High'].iloc[peak2_idx]
+            addplots.append(mpf.make_addplot(resistance_line, color='blue', marker='o', linestyle='-', width=2))
+
+            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', marker='o', label='Double Top'))
+
+        # ----------------------------------------------------------------------
+        # Double Bottom Pattern
+        # ----------------------------------------------------------------------
         elif pattern['type'] == 'double_bottom':
-            trough1, trough2 = pattern['trough1'], pattern['trough2']
-            support_val = min(clean_df['Low'].iloc[trough1], clean_df['Low'].iloc[trough2])
+            # --- Key points ---
+            trough1_idx, trough2_idx = pattern['trough1'], pattern['trough2']
+
+            # --- Visualization ---
+            # This line connects the two troughs of the double bottom.
+            #   - color: 'blue' (customize the line color)
+            #   - marker: 'o' (customize the marker for the troughs)
+            #   - linestyle: '-' (customize the line style)
+            #   - width: 2 (customize the line thickness)
             support_line = np.full(len(clean_df), np.nan)
-            for i in range(max(0, trough1 - 5), min(trough2 + 15, len(clean_df))):
-                support_line[i] = support_val
-            addplots.append(mpf.make_addplot(support_line, color='blue', linestyle='--', label='Double Bottom'))
+            support_line[trough1_idx] = clean_df['Low'].iloc[trough1_idx]
+            support_line[trough2_idx] = clean_df['Low'].iloc[trough2_idx]
+            addplots.append(mpf.make_addplot(support_line, color='blue', marker='o', linestyle='-', width=2, label='Double Bottom'))
+
+        # ----------------------------------------------------------------------
+        # Triangle Patterns (Ascending, Descending, Symmetrical)
+        # ----------------------------------------------------------------------
         elif 'triangle' in pattern['type']:
             peaks, troughs = pattern['peaks'], pattern['troughs']
             triangle_name = pattern['type'].replace('_', ' ').title()
-            pattern_start = min(peaks[0] if len(peaks) > 0 else len(clean_df), troughs[0] if len(troughs) > 0 else len(clean_df))
-            pattern_end = max(peaks[-1] if len(peaks) > 0 else 0, troughs[-1] if len(troughs) > 0 else 0)
+
+            # --- Visualization ---
+            # This logic draws the upper and lower trendlines for the triangle.
+            #   - color: 'green' (customize the line color)
+            #   - width: 2 (customize the line thickness)
             if len(peaks) >= 2:
                 slope = (clean_df['High'].iloc[peaks[-1]] - clean_df['High'].iloc[peaks[0]]) / (peaks[-1] - peaks[0])
                 intercept = clean_df['High'].iloc[peaks[0]] - slope * peaks[0]
@@ -300,48 +372,119 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
                 intercept = clean_df['Low'].iloc[troughs[0]] - slope * troughs[0]
                 lower_line = [slope * i + intercept for i in range(len(clean_df))]
                 addplots.append(mpf.make_addplot(lower_line, color='green', width=2))
+
             legend_handles.append(plt.Line2D([], [], color='green', linestyle='-', label=triangle_name))
+
+        # ----------------------------------------------------------------------
+        # Flag Patterns (Bull Flag, Bear Flag)
+        # ----------------------------------------------------------------------
         elif pattern['type'] in ['flag', 'bear_flag']:
-            flag_start = pattern['flag_start']
-            flag_high = clean_df['High'].iloc[flag_start:].max()
-            flag_low = clean_df['Low'].iloc[flag_start:].min()
+            flag_start_idx = pattern['flag_start']
+
+            # --- Visualization ---
+            # This logic draws the parallel lines of the flag.
+            #   - color: 'orange' (customize the line color)
+            #   - linestyle: '--' (customize the line style)
+            #   - width: 2 (customize the line thickness)
+            flag_high = clean_df['High'].iloc[flag_start_idx:].max()
+            flag_low = clean_df['Low'].iloc[flag_start_idx:].min()
             flag_top = np.full(len(clean_df), np.nan)
             flag_bottom = np.full(len(clean_df), np.nan)
-            for i in range(max(0, flag_start - 2), min(len(clean_df), flag_start + 20)):
+            for i in range(max(0, flag_start_idx - 2), min(len(clean_df), flag_start_idx + 20)):
                 flag_top[i] = flag_high
                 flag_bottom[i] = flag_low
             addplots.append(mpf.make_addplot(flag_top, color='orange', width=2, linestyle='--'))
             addplots.append(mpf.make_addplot(flag_bottom, color='orange', width=2, linestyle='--'))
+
             flag_type = "Bull Flag" if pattern['type'] == 'flag' else "Bear Flag"
             legend_handles.append(plt.Line2D([], [], color='orange', linestyle='--', label=flag_type))
+
+        # ----------------------------------------------------------------------
+        # Cup & Handle Pattern
+        # ----------------------------------------------------------------------
         elif pattern['type'] == 'cup_handle':
-            cup_start, handle_end = pattern['cup_start'], pattern['handle_end']
-            rim_line = np.full(len(clean_df), np.nan)
-            for i in range(max(0, cup_start - 5), min(handle_end + 10, len(clean_df))):
-                rim_line[i] = pattern['rim_level']
-            addplots.append(mpf.make_addplot(rim_line, color='purple', linestyle='--', width=2))
-            legend_handles.append(plt.Line2D([], [], color='purple', linestyle='--', label='Cup & Handle'))
+            cup_start_idx, cup_bottom_idx, cup_end_idx = pattern['cup_start'], pattern['cup_bottom'], pattern['cup_end']
+            handle_start_idx, handle_end_idx = pattern['handle_start'], pattern['handle_end']
+
+            # --- Visualization: Cup ---
+            # This part draws the 'U' shape for the cup using a simple parabola.
+            # The calculation scales the parabola between the cup's rim and its bottom.
+            #   - color: 'purple' (customize the line color)
+            #   - width: 2 (customize the line thickness)
+            cup_line = np.full(len(clean_df), np.nan)
+            cup_indices = np.arange(cup_start_idx, cup_end_idx + 1)
+            x = np.linspace(-1, 1, len(cup_indices))
+            y = x**2 # Parabola equation
+            min_y, max_y = np.min(y), np.max(y)
+            scaled_y = clean_df['Low'].iloc[cup_bottom_idx] + (clean_df['High'].iloc[cup_start_idx] - clean_df['Low'].iloc[cup_bottom_idx]) * (y - min_y) / (max_y - min_y)
+            cup_line[cup_indices] = scaled_y
+            addplots.append(mpf.make_addplot(cup_line, color='purple', width=2))
+
+            # --- Visualization: Handle ---
+            # This part draws the trendline for the handle.
+            #   - color: 'purple' (customize the line color)
+            #   - linestyle: '--' (customize the line style)
+            #   - width: 1.5 (customize the line thickness)
+            slope = (clean_df['Low'].iloc[handle_end_idx] - clean_df['High'].iloc[handle_start_idx]) / (handle_end_idx - handle_start_idx)
+            intercept = clean_df['High'].iloc[handle_start_idx] - slope * handle_start_idx
+            handle_line = [slope * i + intercept for i in range(len(clean_df))]
+            addplots.append(mpf.make_addplot(handle_line, color='purple', linestyle='--', width=1.5))
+
+            legend_handles.append(plt.Line2D([], [], color='purple', linestyle='-', label='Cup & Handle'))
+
+        # ----------------------------------------------------------------------
+        # Channel Patterns (Ascending, Descending, Horizontal)
+        # ----------------------------------------------------------------------
         elif 'channel' in pattern['type']:
             start_idx, end_idx = pattern['start_idx'], min(pattern['end_idx'] + 20, len(clean_df) - 1)
+
+            # --- Visualization ---
+            # This logic draws the upper and lower parallel lines of the channel.
+            #   - color: 'cyan' (customize the line color)
+            #   - width: 2 (customize the line thickness)
             upper_line = np.full(len(clean_df), np.nan)
             for i in range(start_idx, end_idx):
                 upper_line[i] = pattern['upper_slope'] * i + pattern['upper_intercept']
             addplots.append(mpf.make_addplot(upper_line, color='cyan', width=2))
+
             lower_line = np.full(len(clean_df), np.nan)
             for i in range(start_idx, end_idx):
                 lower_line[i] = pattern['lower_slope'] * i + pattern['lower_intercept']
             addplots.append(mpf.make_addplot(lower_line, color='cyan', width=2))
+
             channel_name = pattern['type'].replace('_', ' ').title()
             legend_handles.append(plt.Line2D([], [], color='cyan', linestyle='-', label=channel_name))
+
+        # ----------------------------------------------------------------------
+        # Threat Line
+        # ----------------------------------------------------------------------
         elif 'threat_line' in pattern['type']:
-            p1, slope, intercept = pattern['p1'], pattern['slope'], pattern['intercept']
+            start_idx, slope, intercept = pattern['p1'], pattern['slope'], pattern['intercept']
+
+            # --- Visualization ---
+            # This logic draws a threatening trendline based on recent peaks or troughs.
+            #   - color: 'black' (customize the line color)
+            #   - linestyle: ':' (customize the line style, e.g., '--', '-.')
+            #   - width: 2 (customize the line thickness)
             line_values = np.full(len(clean_df), np.nan)
-            for i in range(p1, len(clean_df)):
+            for i in range(start_idx, len(clean_df)):
                 line_values[i] = slope * i + intercept
             addplots.append(mpf.make_addplot(line_values, color='black', linestyle=':', width=2))
+
             legend_handles.append(plt.Line2D([], [], color='black', linestyle=':', label='Threat Line'))
+
+        # ----------------------------------------------------------------------
+        # Regime Start
+        # ----------------------------------------------------------------------
         elif pattern['type'] == 'regime_start':
             start_index = pattern['index']
+
+            # --- Visualization (Deferred Drawing) ---
+            # This draws a vertical line to mark a change in market regime.
+            # It uses a deferred drawing because mplfinance handles vertical lines differently.
+            #   - color: 'magenta' (customize the line color)
+            #   - linestyle: '--' (customize the line style)
+            #   - linewidth: 2 (customize the line thickness)
             deferred_drawings.append(
                 lambda ax: ax.axvline(x=start_index, color='magenta', linestyle='--', linewidth=2)
             )
