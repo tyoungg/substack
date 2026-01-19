@@ -129,30 +129,36 @@ class PatternDetector:
     def detect_double_top_bottom(self):
         """Detect Double Top/Bottom patterns"""
         peaks, troughs = self.find_peaks_troughs()
+        min_duration = 63  # Approximately 3 months
         if len(peaks) >= 2:
             for i in range(len(peaks) - 1):
                 p1, p2 = peaks[i], peaks[i+1]
-                if abs(self.highs[p1] - self.highs[p2]) < 0.03 * self.highs[p1]:
+                if abs(self.highs[p1] - self.highs[p2]) < 0.03 * self.highs[p1] and (p2 - p1) >= min_duration:
                     return {'type': 'double_top', 'peak1': p1, 'peak2': p2}
         if len(troughs) >= 2:
             for i in range(len(troughs) - 1):
                 t1, t2 = troughs[i], troughs[i+1]
-                if abs(self.lows[t1] - self.lows[t2]) < 0.03 * self.lows[t1]:
+                if abs(self.lows[t1] - self.lows[t2]) < 0.03 * self.lows[t1] and (t2 - t1) >= min_duration:
                     return {'type': 'double_bottom', 'trough1': t1, 'trough2': t2}
         return None
 
-    def detect_triangle(self):
+    def detect_triangle(self, window=63):
         """Detect Triangle patterns"""
+        if len(self.closes) < window:
+            return None
+        recent_data = self.closes[-window:]
         peaks, troughs = self.find_peaks_troughs()
-        if len(peaks) >= 2 and len(troughs) >= 2:
-            peak_slope = self._calculate_trendline_slope(peaks, self.highs)
-            trough_slope = self._calculate_trendline_slope(troughs, self.lows)
+        recent_peaks = peaks[peaks >= len(self.closes) - window]
+        recent_troughs = troughs[troughs >= len(self.closes) - window]
+        if len(recent_peaks) >= 2 and len(recent_troughs) >= 2:
+            peak_slope = self._calculate_trendline_slope(recent_peaks, self.highs)
+            trough_slope = self._calculate_trendline_slope(recent_troughs, self.lows)
             if abs(peak_slope) < 0.001 and trough_slope > 0:
-                return {'type': 'ascending_triangle', 'peaks': peaks, 'troughs': troughs}
+                return {'type': 'ascending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
             elif peak_slope < 0 and abs(trough_slope) < 0.001:
-                return {'type': 'descending_triangle', 'peaks': peaks, 'troughs': troughs}
+                return {'type': 'descending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
             elif peak_slope < 0 and trough_slope > 0:
-                return {'type': 'symmetrical_triangle', 'peaks': peaks, 'troughs': troughs}
+                return {'type': 'symmetrical_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
         return None
 
     def _calculate_trendline_slope(self, indices, values):
@@ -182,7 +188,7 @@ class PatternDetector:
                 }
         return None
 
-    def detect_cup_handle(self, min_cup_length=30, handle_ratio=0.3):
+    def detect_cup_handle(self, min_cup_length=63, handle_ratio=0.3):
         """Detect Cup and Handle pattern"""
         if len(self.closes) < min_cup_length + 10:
             return None
@@ -221,12 +227,26 @@ class PatternDetector:
                     }
         return None
 
-    def detect_price_channels(self, min_touches=3, parallel_tolerance=0.02):
-        """Detect Price Channels"""
-        peaks, troughs = self.find_peaks_troughs(prominence=0.015)
+    def detect_price_channels(self, min_touches=3, parallel_tolerance=0.02, lookback_period=60):
+        """Detect Price Channels focusing on recent data"""
+        start_idx = max(0, len(self.closes) - lookback_period)
+        recent_closes = self.closes[start_idx:]
+        recent_highs = self.highs[start_idx:]
+        recent_lows = self.lows[start_idx:]
+
+        recent_df = self.df.iloc[start_idx:].copy()
+        temp_detector = PatternDetector.__new__(PatternDetector)
+        temp_detector.closes = recent_closes
+        temp_detector.highs = recent_highs
+        temp_detector.lows = recent_lows
+
+        peaks, troughs = temp_detector.find_peaks_troughs(prominence=0.015)
 
         if len(peaks) < min_touches or len(troughs) < min_touches:
             return None
+
+        peaks = peaks + start_idx
+        troughs = troughs + start_idx
 
         for i in range(len(peaks) - min_touches + 1):
             upper_points = peaks[i:i + min_touches]
@@ -256,7 +276,7 @@ class PatternDetector:
                         'upper_intercept': upper_intercept,
                         'lower_slope': lower_slope,
                         'lower_intercept': self.lows[lower_points[0]] - lower_slope * lower_points[0],
-                        'start_idx': min(upper_points[0], lower_points[0]),
+                        'start_idx': max(min(upper_points[0], lower_points[0]), start_idx),
                         'end_idx': max(upper_points[-1], lower_points[-1]),
                     }
         return None
@@ -271,7 +291,7 @@ class PatternDetector:
             return {'type': 'regime_start', 'index': start_index}
         return None
 
-    def detect_threat_line(self, lookback=120, prominence_pct=0.08):
+    def detect_threat_line(self, lookback=60, prominence_pct=0.08):
         """
         Detects a "threat line" which is a short-term trendline connecting recent significant peaks or troughs.
         A resistance line is formed by connecting two recent, descending peaks.
