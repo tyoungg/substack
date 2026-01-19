@@ -456,8 +456,15 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
             #   - linestyle: '-' (customize the line style)
             #   - width: 2 (customize the line thickness)
             resistance_line = np.full(len(clean_df), np.nan)
-            resistance_line[peak1_idx] = clean_df['High'].iloc[peak1_idx]
-            resistance_line[peak2_idx] = clean_df['High'].iloc[peak2_idx]
+            start_idx, end_idx = peak1_idx, peak2_idx
+            start_val = clean_df['High'].iloc[start_idx]
+            end_val = clean_df['High'].iloc[end_idx]
+
+            if end_idx > start_idx:
+                slope = (end_val - start_val) / (end_idx - start_idx)
+                for j in range(start_idx, end_idx + 1):
+                    resistance_line[j] = start_val + slope * (j - start_idx)
+
             addplots.append(mpf.make_addplot(resistance_line, color='blue', marker='o', linestyle='-', width=2))
 
             legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', marker='o', label='Double Top'))
@@ -476,9 +483,17 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
             #   - linestyle: '-' (customize the line style)
             #   - width: 2 (customize the line thickness)
             support_line = np.full(len(clean_df), np.nan)
-            support_line[trough1_idx] = clean_df['Low'].iloc[trough1_idx]
-            support_line[trough2_idx] = clean_df['Low'].iloc[trough2_idx]
+            start_idx, end_idx = trough1_idx, trough2_idx
+            start_val = clean_df['Low'].iloc[start_idx]
+            end_val = clean_df['Low'].iloc[end_idx]
+
+            if end_idx > start_idx:
+                slope = (end_val - start_val) / (end_idx - start_idx)
+                for j in range(start_idx, end_idx + 1):
+                    support_line[j] = start_val + slope * (j - start_idx)
+
             addplots.append(mpf.make_addplot(support_line, color='blue', marker='o', linestyle='-', width=2, label='Double Bottom'))
+            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', marker='o', label='Double Bottom'))
 
         # ----------------------------------------------------------------------
         # Triangle Patterns (Ascending, Descending, Symmetrical)
