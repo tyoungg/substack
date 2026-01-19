@@ -31,6 +31,10 @@ for symbol in symbols:
         progress=False,
     )
     df = df.dropna()
+
+    if df.empty:
+        print(f"  No data for {symbol}, skipping.")
+        continue
     
     # Fix MultiIndex columns
     if isinstance(df.columns, pd.MultiIndex):
