@@ -467,7 +467,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
 
             addplots.append(mpf.make_addplot(resistance_line, color='blue', marker='o', linestyle='-', width=2))
 
-            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', marker='o', label='Double Top'))
+            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', label='Double Top'))
 
         # ----------------------------------------------------------------------
         # Double Bottom Pattern
@@ -493,7 +493,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
                     support_line[j] = start_val + slope * (j - start_idx)
 
             addplots.append(mpf.make_addplot(support_line, color='blue', marker='o', linestyle='-', width=2, label='Double Bottom'))
-            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', marker='o', label='Double Bottom'))
+            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', label='Double Bottom'))
 
         # ----------------------------------------------------------------------
         # Triangle Patterns (Ascending, Descending, Symmetrical)
