@@ -129,19 +129,20 @@ class PatternDetector:
     def detect_double_top_bottom(self):
         """Detect Double Top/Bottom patterns"""
         peaks, troughs = self.find_peaks_troughs()
+        min_duration = 63  # Approximately 3 months
         if len(peaks) >= 2:
             for i in range(len(peaks) - 1):
                 p1, p2 = peaks[i], peaks[i+1]
-                if abs(self.highs[p1] - self.highs[p2]) < 0.03 * self.highs[p1]:
+                if abs(self.highs[p1] - self.highs[p2]) < 0.03 * self.highs[p1] and (p2 - p1) >= min_duration:
                     return {'type': 'double_top', 'peak1': p1, 'peak2': p2}
         if len(troughs) >= 2:
             for i in range(len(troughs) - 1):
                 t1, t2 = troughs[i], troughs[i+1]
-                if abs(self.lows[t1] - self.lows[t2]) < 0.03 * self.lows[t1]:
+                if abs(self.lows[t1] - self.lows[t2]) < 0.03 * self.lows[t1] and (t2 - t1) >= min_duration:
                     return {'type': 'double_bottom', 'trough1': t1, 'trough2': t2}
         return None
 
-    def detect_triangle(self, window=20):
+    def detect_triangle(self, window=63):
         """Detect Triangle patterns"""
         if len(self.closes) < window:
             return None
@@ -187,7 +188,7 @@ class PatternDetector:
                 }
         return None
 
-    def detect_cup_handle(self, min_cup_length=30, handle_ratio=0.3):
+    def detect_cup_handle(self, min_cup_length=63, handle_ratio=0.3):
         """Detect Cup and Handle pattern"""
         if len(self.closes) < min_cup_length + 10:
             return None
