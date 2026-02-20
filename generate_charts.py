@@ -43,10 +43,11 @@ for symbol in symbols:
     # Build mplfinance-safe DataFrame (guaranteed 1-D floats)
     clean_df = pd.DataFrame(
         {
-            "Open":  df["Open"].to_numpy().astype("float64").ravel(),
-            "High":  df["High"].to_numpy().astype("float64").ravel(),
-            "Low":   df["Low"].to_numpy().astype("float64").ravel(),
-            "Close": df["Close"].to_numpy().astype("float64").ravel(),
+            "Open":   df["Open"].to_numpy().astype("float64").ravel(),
+            "High":   df["High"].to_numpy().astype("float64").ravel(),
+            "Low":    df["Low"].to_numpy().astype("float64").ravel(),
+            "Close":  df["Close"].to_numpy().astype("float64").ravel(),
+            "Volume": df["Volume"].to_numpy().astype("float64").ravel(),
         },
         index=pd.to_datetime(df.index)
     )
@@ -64,6 +65,7 @@ for symbol in symbols:
                 detector.detect_flag_pennant(),
                 detector.detect_cup_handle(),
                 detector.detect_price_channels(),
+                detector.detect_undercut_rally(),
                 detector.detect_regime_start(),
                 detector.detect_threat_line()
             ]
