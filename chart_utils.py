@@ -115,6 +115,11 @@ class PatternDetector:
                rs_prominence > head_prominence * shoulder_prominence_ratio:
                 continue
 
+            # Strength based on shoulder symmetry and neckline flatness
+            symmetry = 1.0 - abs(left_shoulder_price - right_shoulder_price) / head_price
+            neckline_flatness = 1.0 - min(1.0, abs(neckline_coeffs[0]) * 10)
+            strength = 0.5 + 0.3 * symmetry + 0.2 * neckline_flatness
+
             # Return the first valid pattern found
             return {
                 'type': 'head_shoulders',
@@ -122,7 +127,8 @@ class PatternDetector:
                 'head': head_idx,
                 'right_shoulder': right_shoulder_idx,
                 'left_trough': left_trough_idx,
-                'right_trough': right_trough_idx
+                'right_trough': right_trough_idx,
+                'strength': strength
             }
         return None
 
@@ -134,12 +140,14 @@ class PatternDetector:
             for i in range(len(peaks) - 1):
                 p1, p2 = peaks[i], peaks[i+1]
                 if abs(self.highs[p1] - self.highs[p2]) < 0.03 * self.highs[p1] and (p2 - p1) >= min_duration:
-                    return {'type': 'double_top', 'peak1': p1, 'peak2': p2}
+                    strength = 0.5 + 0.5 * (1.0 - abs(self.highs[p1] - self.highs[p2]) / (0.03 * self.highs[p1]))
+                    return {'type': 'double_top', 'peak1': p1, 'peak2': p2, 'strength': strength}
         if len(troughs) >= 2:
             for i in range(len(troughs) - 1):
                 t1, t2 = troughs[i], troughs[i+1]
                 if abs(self.lows[t1] - self.lows[t2]) < 0.03 * self.lows[t1] and (t2 - t1) >= min_duration:
-                    return {'type': 'double_bottom', 'trough1': t1, 'trough2': t2}
+                    strength = 0.5 + 0.5 * (1.0 - abs(self.lows[t1] - self.lows[t2]) / (0.03 * self.lows[t1]))
+                    return {'type': 'double_bottom', 'trough1': t1, 'trough2': t2, 'strength': strength}
         return None
 
     def detect_triangle(self, window=63):
@@ -153,12 +161,16 @@ class PatternDetector:
         if len(recent_peaks) >= 2 and len(recent_troughs) >= 2:
             peak_slope = self._calculate_trendline_slope(recent_peaks, self.highs)
             trough_slope = self._calculate_trendline_slope(recent_troughs, self.lows)
+
+            # Base strength
+            strength = 0.4 + 0.1 * min(4, len(recent_peaks) + len(recent_troughs) - 4)
+
             if abs(peak_slope) < 0.001 and trough_slope > 0:
-                return {'type': 'ascending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
+                return {'type': 'ascending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs, 'strength': strength + 0.2}
             elif peak_slope < 0 and abs(trough_slope) < 0.001:
-                return {'type': 'descending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
+                return {'type': 'descending_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs, 'strength': strength + 0.2}
             elif peak_slope < 0 and trough_slope > 0:
-                return {'type': 'symmetrical_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs}
+                return {'type': 'symmetrical_triangle', 'peaks': recent_peaks, 'troughs': recent_troughs, 'strength': strength + 0.1}
         return None
 
     def _calculate_trendline_slope(self, indices, values):
@@ -180,11 +192,13 @@ class PatternDetector:
         if abs(pole_move) > 0.05:
             volatility = np.std(recent) / np.mean(recent)
             if volatility < 0.03:
+                strength = 0.4 + min(0.6, abs(pole_move) * 3)
                 return {
                     'type': 'flag' if pole_move > 0 else 'bear_flag',
                     'pole_start': len(self.closes) - window * 2,
                     'flag_start': len(self.closes) - window,
-                    'pole_move': pole_move
+                    'pole_move': pole_move,
+                    'strength': strength
                 }
         return None
 
@@ -216,6 +230,8 @@ class PatternDetector:
                 if (np.min(handle_data) > upper_third and
                     handle_data[-1] < handle_data[0] and
                     abs(handle_data[-1] - handle_data[0]) < 0.03 * handle_data[0]):
+
+                    strength = 0.6 + 0.2 * (min(126, min_cup_length) / 126.0) # Bonus for longer cup
                     return {
                         'type': 'cup_handle',
                         'cup_start': start_idx,
@@ -223,7 +239,8 @@ class PatternDetector:
                         'cup_end': end_idx - 1,
                         'handle_start': handle_start,
                         'handle_end': handle_end,
-                        'rim_level': cup_top
+                        'rim_level': cup_top,
+                        'strength': strength
                     }
         return None
 
@@ -268,6 +285,7 @@ class PatternDetector:
                     else:
                         channel_type = 'descending_channel'
 
+                    strength = 0.4 + 0.1 * min(4, min_touches - 3) + 0.2 * (1.0 - slope_diff / (avg_slope if avg_slope > 0 else 1.0))
                     return {
                         'type': channel_type,
                         'upper_points': upper_points,
@@ -278,7 +296,56 @@ class PatternDetector:
                         'lower_intercept': self.lows[lower_points[0]] - lower_slope * lower_points[0],
                         'start_idx': max(min(upper_points[0], lower_points[0]), start_idx),
                         'end_idx': max(upper_points[-1], lower_points[-1]),
+                        'strength': min(1.0, strength)
                     }
+        return None
+
+    def detect_undercut_rally(self, volume_window=20):
+        """
+        Detects Undercut & Rally (U&R) entry points.
+        A U&R occurs when the price drops below a significant recent low (trough)
+        and then closes back above it. Volume should be higher on the rally back.
+        """
+        peaks, troughs = self.find_peaks_troughs()
+        if len(troughs) == 0:
+            return None
+
+        # Consider the most recent significant troughs
+        for trough_idx in reversed(troughs):
+            if trough_idx > len(self.closes) - 5: continue # Trough too recent
+
+            trough_price = self.lows[trough_idx]
+
+            # Look for an undercut after the trough
+            undercut_idx = -1
+            for i in range(trough_idx + 1, len(self.closes)):
+                if self.lows[i] < trough_price:
+                    undercut_idx = i
+                    break
+
+            if undercut_idx != -1:
+                # Look for a rally back above after the undercut
+                for i in range(undercut_idx + 1, len(self.closes)):
+                    if self.closes[i] > trough_price:
+                        rally_idx = i
+
+                        # Check volume confirmation
+                        avg_vol = np.mean(self.volume[max(0, rally_idx-volume_window):rally_idx])
+                        vol_ratio = self.volume[rally_idx] / avg_vol if avg_vol > 0 else 1.0
+
+                        # Strength based on volume ratio and recency
+                        recency_bonus = max(0, 1.0 - (len(self.closes) - rally_idx) / 20.0)
+                        strength = 0.5 + min(0.3, (vol_ratio - 1.0) / 2.0 if vol_ratio > 1.0 else 0) + 0.2 * recency_bonus
+
+                        return {
+                            'type': 'undercut_rally',
+                            'trough_idx': trough_idx,
+                            'undercut_idx': undercut_idx,
+                            'rally_idx': rally_idx,
+                            'level': trough_price,
+                            'strength': strength,
+                            'vol_ratio': vol_ratio
+                        }
         return None
 
     def detect_regime_start(self, window=21, std_dev_threshold=2.0):
@@ -288,7 +355,9 @@ class PatternDetector:
         regime_starts = price_changes[price_changes > std_dev_threshold * rolling_std]
         if not regime_starts.empty:
             start_index = self.df.index.get_loc(regime_starts.index[0])
-            return {'type': 'regime_start', 'index': start_index}
+            magnitude = regime_starts.iloc[0] / (rolling_std.iloc[start_index] if rolling_std.iloc[start_index] > 0 else 1.0)
+            strength = 0.5 + min(0.5, (magnitude - std_dev_threshold) / std_dev_threshold)
+            return {'type': 'regime_start', 'index': start_index, 'strength': strength}
         return None
 
     def detect_threat_line(self, lookback=60, prominence_pct=0.08):
@@ -327,11 +396,13 @@ class PatternDetector:
                 if p2 - p1 > 0: # a little safety check
                     line_slope = (self.highs[p2] - self.highs[p1]) / (p2 - p1)
                     intercept = self.highs[p1] - line_slope * p1
+                    strength = 0.3 + min(0.7, abs(line_slope) * 10)
                     resistance_line = {
                         'type': 'threat_line_resistance',
                         'p1': p1, 'p2': p2,
                         'slope': line_slope,
-                        'intercept': intercept
+                        'intercept': intercept,
+                        'strength': strength
                     }
 
         support_line = None
@@ -343,11 +414,13 @@ class PatternDetector:
                  if t2 - t1 > 0: # a little safety check
                     line_slope = (self.lows[t2] - self.lows[t1]) / (t2 - t1)
                     intercept = self.lows[t1] - line_slope * t1
+                    strength = 0.3 + min(0.7, abs(line_slope) * 10)
                     support_line = {
                         'type': 'threat_line_support',
                         'p1': t1, 'p2': t2,
                         'slope': line_slope,
-                        'intercept': intercept
+                        'intercept': intercept,
+                        'strength': strength
                     }
 
         # Prioritize the most recent line
@@ -391,9 +464,12 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     legend_handles = []
     deferred_drawings = []
 
-    for pattern in patterns:
-        if pattern is None:
-            continue
+    # Filter out None and sort by strength
+    patterns = [p for p in patterns if p is not None]
+    patterns.sort(key=lambda x: x.get('strength', 0), reverse=True)
+
+    for i, pattern in enumerate(patterns):
+        rank = i + 1
 
         # ----------------------------------------------------------------------
         # Head & Shoulders Pattern
@@ -441,7 +517,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
                 neckline = [slope * i + intercept for i in range(len(clean_df))]
                 addplots.append(mpf.make_addplot(neckline, color='red', linestyle='--', width=1.5))
 
-            legend_handles.append(plt.Line2D([], [], color='red', linestyle='-', marker='o', label='Head & Shoulders'))
+            legend_handles.append(plt.Line2D([], [], color='red', linestyle='-', marker='o', label=f"Rank {rank}: Head & Shoulders"))
 
         # ----------------------------------------------------------------------
         # Double Top Pattern
@@ -468,7 +544,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
 
             addplots.append(mpf.make_addplot(resistance_line, color='blue', marker='o', linestyle='-', width=2))
 
-            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', label='Double Top'))
+            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', label=f"Rank {rank}: Double Top"))
 
         # ----------------------------------------------------------------------
         # Double Bottom Pattern
@@ -493,8 +569,8 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
                 for j in range(start_idx, end_idx + 1):
                     support_line[j] = start_val + slope * (j - start_idx)
 
-            addplots.append(mpf.make_addplot(support_line, color='blue', marker='o', linestyle='-', width=2, label='Double Bottom'))
-            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', label='Double Bottom'))
+            addplots.append(mpf.make_addplot(support_line, color='blue', marker='o', linestyle='-', width=2))
+            legend_handles.append(plt.Line2D([], [], color='blue', linestyle='-', label=f"Rank {rank}: Double Bottom"))
 
         # ----------------------------------------------------------------------
         # Triangle Patterns (Ascending, Descending, Symmetrical)
@@ -518,7 +594,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
                 lower_line = [slope * i + intercept for i in range(len(clean_df))]
                 addplots.append(mpf.make_addplot(lower_line, color='green', width=2))
 
-            legend_handles.append(plt.Line2D([], [], color='green', linestyle='-', label=triangle_name))
+            legend_handles.append(plt.Line2D([], [], color='green', linestyle='-', label=f"Rank {rank}: {triangle_name}"))
 
         # ----------------------------------------------------------------------
         # Flag Patterns (Bull Flag, Bear Flag)
@@ -542,7 +618,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
             addplots.append(mpf.make_addplot(flag_bottom, color='orange', width=2, linestyle='--'))
 
             flag_type = "Bull Flag" if pattern['type'] == 'flag' else "Bear Flag"
-            legend_handles.append(plt.Line2D([], [], color='orange', linestyle='--', label=flag_type))
+            legend_handles.append(plt.Line2D([], [], color='orange', linestyle='--', label=f"Rank {rank}: {flag_type}"))
 
         # ----------------------------------------------------------------------
         # Cup & Handle Pattern
@@ -602,7 +678,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
                     lower_handle_line[i] = slope * i + intercept - max_deviation
             addplots.append(mpf.make_addplot(lower_handle_line, color='purple', linestyle='--', width=1.5))
 
-            legend_handles.append(plt.Line2D([], [], color='purple', linestyle='-', label='Cup & Handle'))
+            legend_handles.append(plt.Line2D([], [], color='purple', linestyle='-', label=f"Rank {rank}: Cup & Handle"))
 
         # ----------------------------------------------------------------------
         # Channel Patterns (Ascending, Descending, Horizontal)
@@ -625,7 +701,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
             addplots.append(mpf.make_addplot(lower_line, color='cyan', width=2))
 
             channel_name = pattern['type'].replace('_', ' ').title()
-            legend_handles.append(plt.Line2D([], [], color='cyan', linestyle='-', label=channel_name))
+            legend_handles.append(plt.Line2D([], [], color='cyan', linestyle='-', label=f"Rank {rank}: {channel_name}"))
 
         # ----------------------------------------------------------------------
         # Threat Line
@@ -643,7 +719,26 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
                 line_values[i] = slope * i + intercept
             addplots.append(mpf.make_addplot(line_values, color='black', linestyle=':', width=2))
 
-            legend_handles.append(plt.Line2D([], [], color='black', linestyle=':', label='Threat Line'))
+            legend_handles.append(plt.Line2D([], [], color='black', linestyle=':', label=f"Rank {rank}: Threat Line"))
+
+        # ----------------------------------------------------------------------
+        # Undercut & Rally
+        # ----------------------------------------------------------------------
+        elif pattern['type'] == 'undercut_rally':
+            rally_idx = pattern['rally_idx']
+            level = pattern['level']
+
+            # Horizontal line at the undercut level
+            level_line = np.full(len(clean_df), np.nan)
+            level_line[pattern['trough_idx']:rally_idx+1] = level
+            addplots.append(mpf.make_addplot(level_line, color='green', linestyle=':', width=1))
+
+            # Marker at the rally point
+            rally_marker = np.full(len(clean_df), np.nan)
+            rally_marker[rally_idx] = clean_df['Low'].iloc[rally_idx] * 0.99
+            addplots.append(mpf.make_addplot(rally_marker, type='scatter', marker='^', markersize=100, color='green'))
+
+            legend_handles.append(plt.Line2D([], [], color='green', marker='^', linestyle=':', label=f"Rank {rank}: Undercut & Rally"))
 
         # ----------------------------------------------------------------------
         # Regime Start
@@ -660,7 +755,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
             deferred_drawings.append(
                 lambda ax: ax.axvline(x=start_index, color='magenta', linestyle='--', linewidth=2)
             )
-            legend_handles.append(plt.Line2D([], [], color='magenta', linestyle='--', label='Regime Start'))
+            legend_handles.append(plt.Line2D([], [], color='magenta', linestyle='--', label=f"Rank {rank}: Regime Start"))
 
     fig, axes = mpf.plot(
         clean_df, type="candle", style="yahoo",
