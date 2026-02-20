@@ -350,14 +350,17 @@ class PatternDetector:
 
     def detect_regime_start(self, window=21, std_dev_threshold=2.0):
         """Detects a regime start, defined as a significant price change."""
-        price_changes = self.df['Close'].pct_change().abs()
+        # Calculate percent changes from the closes array for consistency
+        closes_series = pd.Series(self.closes)
+        price_changes = closes_series.pct_change().abs()
         rolling_std = price_changes.rolling(window=window).std()
+
         regime_starts = price_changes[price_changes > std_dev_threshold * rolling_std]
         if not regime_starts.empty:
-            start_index = self.df.index.get_loc(regime_starts.index[0])
+            start_index = regime_starts.index[0]
             magnitude = regime_starts.iloc[0] / (rolling_std.iloc[start_index] if rolling_std.iloc[start_index] > 0 else 1.0)
             strength = 0.5 + min(0.5, (magnitude - std_dev_threshold) / std_dev_threshold)
-            return {'type': 'regime_start', 'index': start_index, 'strength': strength}
+            return {'type': 'regime_start', 'index': int(start_index), 'strength': strength}
         return None
 
     def detect_threat_line(self, lookback=60, prominence_pct=0.08):
