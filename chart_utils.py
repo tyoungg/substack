@@ -798,7 +798,7 @@ def plot_simple_chart(clean_df, symbol, company_name):
 
 def generate_html_file_list(folder_path, output_file="index.html"):
     """
-    Generates an HTML index of all PNG files in the specified folder.
+    Generates an HTML gallery index of all PNG files in the specified folder.
     The index.html is saved within the folder_path to ensure relative links work.
     """
     if not os.path.exists(folder_path):
@@ -812,15 +812,25 @@ def generate_html_file_list(folder_path, output_file="index.html"):
         f.write("<!DOCTYPE html>\n")
         f.write("<html>\n")
         f.write("<head>\n")
-        f.write("<title>Folder Contents</title>\n")
+        f.write("<title>Chart Gallery</title>\n")
+        f.write("<style>\n")
+        f.write("  body { font-family: sans-serif; margin: 24px; background: #f7f7f7; }\n")
+        f.write("  h1 { text-align: center; }\n")
+        f.write("  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }\n")
+        f.write("  .card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }\n")
+        f.write("  .card img { width: 100%; height: auto; border-radius: 4px; }\n")
+        f.write("  .card-title { margin-top: 10px; text-align: center; font-weight: bold; font-size: 14px; color: #333; }\n")
+        f.write("</style>\n")
         f.write("</head>\n")
         f.write("<body>\n")
-        f.write(f"<h1>Contents of {folder_path}</h1>\n")
-        f.write("<ul>\n")
+        f.write(f"<h1>Chart Gallery: {folder_path}</h1>\n")
+        f.write('<div class="grid">\n')
         for file_name in files:
-            # Create a link for each file
-            f.write(f'<li><a href="{file_name}">{file_name}</a></li>\n')
-        f.write("</ul>\n")
+            f.write('  <div class="card">\n')
+            f.write(f'    <a href="{file_name}"><img src="{file_name}" alt="{file_name}"></a>\n')
+            f.write(f'    <div class="card-title">{file_name}</div>\n')
+            f.write('  </div>\n')
+        f.write("</div>\n")
         f.write("</body>\n")
         f.write("</html>\n")
     print(f"'{output_path}' created successfully.")

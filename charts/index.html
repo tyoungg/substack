@@ -1,83 +1,307 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Folder Contents</title>
+<title>Chart Gallery</title>
+<style>
+  body { font-family: sans-serif; margin: 24px; background: #f7f7f7; }
+  h1 { text-align: center; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }
+  .card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .card img { width: 100%; height: auto; border-radius: 4px; }
+  .card-title { margin-top: 10px; text-align: center; font-weight: bold; font-size: 14px; color: #333; }
+</style>
 </head>
 <body>
-<h1>Contents of charts</h1>
-<ul>
-<li><a href="ACN_1y_patterns.png">ACN_1y_patterns.png</a></li>
-<li><a href="Biti_1y_patterns.png">Biti_1y_patterns.png</a></li>
-<li><a href="DX-Y.NYB_1y.png">DX-Y.NYB_1y.png</a></li>
-<li><a href="DX-Y.NYB_1y_patterns.png">DX-Y.NYB_1y_patterns.png</a></li>
-<li><a href="GLD_1y.png">GLD_1y.png</a></li>
-<li><a href="GLD_1y_patterns.png">GLD_1y_patterns.png</a></li>
-<li><a href="IGV_1y.png">IGV_1y.png</a></li>
-<li><a href="IGV_1y_patterns.png">IGV_1y_patterns.png</a></li>
-<li><a href="INDA_1y.png">INDA_1y.png</a></li>
-<li><a href="INDA_1y_patterns.png">INDA_1y_patterns.png</a></li>
-<li><a href="ITB_1y.png">ITB_1y.png</a></li>
-<li><a href="ITB_1y_patterns.png">ITB_1y_patterns.png</a></li>
-<li><a href="IWM_1y.png">IWM_1y.png</a></li>
-<li><a href="IWM_1y_patterns.png">IWM_1y_patterns.png</a></li>
-<li><a href="IYR_1y.png">IYR_1y.png</a></li>
-<li><a href="IYR_1y_patterns.png">IYR_1y_patterns.png</a></li>
-<li><a href="KR_1y_patterns.png">KR_1y_patterns.png</a></li>
-<li><a href="KWEB_1y.png">KWEB_1y.png</a></li>
-<li><a href="KWEB_1y_patterns.png">KWEB_1y_patterns.png</a></li>
-<li><a href="LIT_1y.png">LIT_1y.png</a></li>
-<li><a href="LIT_1y_patterns.png">LIT_1y_patterns.png</a></li>
-<li><a href="OCSL_1y_patterns.png">OCSL_1y_patterns.png</a></li>
-<li><a href="OIH_1y.png">OIH_1y.png</a></li>
-<li><a href="OIH_1y_patterns.png">OIH_1y_patterns.png</a></li>
-<li><a href="PALL_1y.png">PALL_1y.png</a></li>
-<li><a href="PALL_1y_patterns.png">PALL_1y_patterns.png</a></li>
-<li><a href="Pltm_1y_patterns.png">Pltm_1y_patterns.png</a></li>
-<li><a href="QQQJ_1y.png">QQQJ_1y.png</a></li>
-<li><a href="QQQJ_1y_patterns.png">QQQJ_1y_patterns.png</a></li>
-<li><a href="QQQ_1y.png">QQQ_1y.png</a></li>
-<li><a href="QQQ_1y_patterns.png">QQQ_1y_patterns.png</a></li>
-<li><a href="Rgti_1y_patterns.png">Rgti_1y_patterns.png</a></li>
-<li><a href="SPY_1y_patterns.png">SPY_1y_patterns.png</a></li>
-<li><a href="UNH_1y.png">UNH_1y.png</a></li>
-<li><a href="UNH_1y_patterns.png">UNH_1y_patterns.png</a></li>
-<li><a href="URA_1y.png">URA_1y.png</a></li>
-<li><a href="URA_1y_patterns.png">URA_1y_patterns.png</a></li>
-<li><a href="VGK_1y.png">VGK_1y.png</a></li>
-<li><a href="VGK_1y_patterns.png">VGK_1y_patterns.png</a></li>
-<li><a href="XBI_1y.png">XBI_1y.png</a></li>
-<li><a href="XBI_1y_patterns.png">XBI_1y_patterns.png</a></li>
-<li><a href="XLB_1y.png">XLB_1y.png</a></li>
-<li><a href="XLB_1y_patterns.png">XLB_1y_patterns.png</a></li>
-<li><a href="XLE_1y.png">XLE_1y.png</a></li>
-<li><a href="XLE_1y_patterns.png">XLE_1y_patterns.png</a></li>
-<li><a href="XLI_1y.png">XLI_1y.png</a></li>
-<li><a href="XLI_1y_patterns.png">XLI_1y_patterns.png</a></li>
-<li><a href="XLP_1y.png">XLP_1y.png</a></li>
-<li><a href="XLP_1y_patterns.png">XLP_1y_patterns.png</a></li>
-<li><a href="XLV_1y.png">XLV_1y.png</a></li>
-<li><a href="XLV_1y_patterns.png">XLV_1y_patterns.png</a></li>
-<li><a href="XME_1y.png">XME_1y.png</a></li>
-<li><a href="XME_1y_patterns.png">XME_1y_patterns.png</a></li>
-<li><a href="^DJI_1y.png">^DJI_1y.png</a></li>
-<li><a href="^DJI_1y_patterns.png">^DJI_1y_patterns.png</a></li>
-<li><a href="^DJT_1y.png">^DJT_1y.png</a></li>
-<li><a href="^DJT_1y_patterns.png">^DJT_1y_patterns.png</a></li>
-<li><a href="^DJU_1y.png">^DJU_1y.png</a></li>
-<li><a href="^DJU_1y_patterns.png">^DJU_1y_patterns.png</a></li>
-<li><a href="^GSPC_1y.png">^GSPC_1y.png</a></li>
-<li><a href="^GSPC_1y_patterns.png">^GSPC_1y_patterns.png</a></li>
-<li><a href="^IXIC_1y.png">^IXIC_1y.png</a></li>
-<li><a href="^IXIC_1y_patterns.png">^IXIC_1y_patterns.png</a></li>
-<li><a href="^KRX_1y.png">^KRX_1y.png</a></li>
-<li><a href="^KRX_1y_patterns.png">^KRX_1y_patterns.png</a></li>
-<li><a href="^NYICDX_1y.png">^NYICDX_1y.png</a></li>
-<li><a href="^NYICDX_1y_patterns.png">^NYICDX_1y_patterns.png</a></li>
-<li><a href="^SOX_1y.png">^SOX_1y.png</a></li>
-<li><a href="^SOX_1y_patterns.png">^SOX_1y_patterns.png</a></li>
-<li><a href="^TNX_1y.png">^TNX_1y.png</a></li>
-<li><a href="^TNX_1y_patterns.png">^TNX_1y_patterns.png</a></li>
-<li><a href="biti_1y_patterns.png">biti_1y_patterns.png</a></li>
-</ul>
+<h1>Chart Gallery: charts</h1>
+<div class="grid">
+  <div class="card">
+    <a href="ACN_1y_patterns.png"><img src="ACN_1y_patterns.png" alt="ACN_1y_patterns.png"></a>
+    <div class="card-title">ACN_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="Biti_1y_patterns.png"><img src="Biti_1y_patterns.png" alt="Biti_1y_patterns.png"></a>
+    <div class="card-title">Biti_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="DX-Y.NYB_1y.png"><img src="DX-Y.NYB_1y.png" alt="DX-Y.NYB_1y.png"></a>
+    <div class="card-title">DX-Y.NYB_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="DX-Y.NYB_1y_patterns.png"><img src="DX-Y.NYB_1y_patterns.png" alt="DX-Y.NYB_1y_patterns.png"></a>
+    <div class="card-title">DX-Y.NYB_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="GLD_1y.png"><img src="GLD_1y.png" alt="GLD_1y.png"></a>
+    <div class="card-title">GLD_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="GLD_1y_patterns.png"><img src="GLD_1y_patterns.png" alt="GLD_1y_patterns.png"></a>
+    <div class="card-title">GLD_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="IGV_1y.png"><img src="IGV_1y.png" alt="IGV_1y.png"></a>
+    <div class="card-title">IGV_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="IGV_1y_patterns.png"><img src="IGV_1y_patterns.png" alt="IGV_1y_patterns.png"></a>
+    <div class="card-title">IGV_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="INDA_1y.png"><img src="INDA_1y.png" alt="INDA_1y.png"></a>
+    <div class="card-title">INDA_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="INDA_1y_patterns.png"><img src="INDA_1y_patterns.png" alt="INDA_1y_patterns.png"></a>
+    <div class="card-title">INDA_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="ITB_1y.png"><img src="ITB_1y.png" alt="ITB_1y.png"></a>
+    <div class="card-title">ITB_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="ITB_1y_patterns.png"><img src="ITB_1y_patterns.png" alt="ITB_1y_patterns.png"></a>
+    <div class="card-title">ITB_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="IWM_1y.png"><img src="IWM_1y.png" alt="IWM_1y.png"></a>
+    <div class="card-title">IWM_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="IWM_1y_patterns.png"><img src="IWM_1y_patterns.png" alt="IWM_1y_patterns.png"></a>
+    <div class="card-title">IWM_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="IYR_1y.png"><img src="IYR_1y.png" alt="IYR_1y.png"></a>
+    <div class="card-title">IYR_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="IYR_1y_patterns.png"><img src="IYR_1y_patterns.png" alt="IYR_1y_patterns.png"></a>
+    <div class="card-title">IYR_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="KR_1y_patterns.png"><img src="KR_1y_patterns.png" alt="KR_1y_patterns.png"></a>
+    <div class="card-title">KR_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="KWEB_1y.png"><img src="KWEB_1y.png" alt="KWEB_1y.png"></a>
+    <div class="card-title">KWEB_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="KWEB_1y_patterns.png"><img src="KWEB_1y_patterns.png" alt="KWEB_1y_patterns.png"></a>
+    <div class="card-title">KWEB_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="LIT_1y.png"><img src="LIT_1y.png" alt="LIT_1y.png"></a>
+    <div class="card-title">LIT_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="LIT_1y_patterns.png"><img src="LIT_1y_patterns.png" alt="LIT_1y_patterns.png"></a>
+    <div class="card-title">LIT_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="OCSL_1y_patterns.png"><img src="OCSL_1y_patterns.png" alt="OCSL_1y_patterns.png"></a>
+    <div class="card-title">OCSL_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="OIH_1y.png"><img src="OIH_1y.png" alt="OIH_1y.png"></a>
+    <div class="card-title">OIH_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="OIH_1y_patterns.png"><img src="OIH_1y_patterns.png" alt="OIH_1y_patterns.png"></a>
+    <div class="card-title">OIH_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="PALL_1y.png"><img src="PALL_1y.png" alt="PALL_1y.png"></a>
+    <div class="card-title">PALL_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="PALL_1y_patterns.png"><img src="PALL_1y_patterns.png" alt="PALL_1y_patterns.png"></a>
+    <div class="card-title">PALL_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="Pltm_1y_patterns.png"><img src="Pltm_1y_patterns.png" alt="Pltm_1y_patterns.png"></a>
+    <div class="card-title">Pltm_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="QQQJ_1y.png"><img src="QQQJ_1y.png" alt="QQQJ_1y.png"></a>
+    <div class="card-title">QQQJ_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="QQQJ_1y_patterns.png"><img src="QQQJ_1y_patterns.png" alt="QQQJ_1y_patterns.png"></a>
+    <div class="card-title">QQQJ_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="QQQ_1y.png"><img src="QQQ_1y.png" alt="QQQ_1y.png"></a>
+    <div class="card-title">QQQ_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="QQQ_1y_patterns.png"><img src="QQQ_1y_patterns.png" alt="QQQ_1y_patterns.png"></a>
+    <div class="card-title">QQQ_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="Rgti_1y_patterns.png"><img src="Rgti_1y_patterns.png" alt="Rgti_1y_patterns.png"></a>
+    <div class="card-title">Rgti_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="SPY_1y_patterns.png"><img src="SPY_1y_patterns.png" alt="SPY_1y_patterns.png"></a>
+    <div class="card-title">SPY_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="UNH_1y.png"><img src="UNH_1y.png" alt="UNH_1y.png"></a>
+    <div class="card-title">UNH_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="UNH_1y_patterns.png"><img src="UNH_1y_patterns.png" alt="UNH_1y_patterns.png"></a>
+    <div class="card-title">UNH_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="URA_1y.png"><img src="URA_1y.png" alt="URA_1y.png"></a>
+    <div class="card-title">URA_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="URA_1y_patterns.png"><img src="URA_1y_patterns.png" alt="URA_1y_patterns.png"></a>
+    <div class="card-title">URA_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="VGK_1y.png"><img src="VGK_1y.png" alt="VGK_1y.png"></a>
+    <div class="card-title">VGK_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="VGK_1y_patterns.png"><img src="VGK_1y_patterns.png" alt="VGK_1y_patterns.png"></a>
+    <div class="card-title">VGK_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="XBI_1y.png"><img src="XBI_1y.png" alt="XBI_1y.png"></a>
+    <div class="card-title">XBI_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="XBI_1y_patterns.png"><img src="XBI_1y_patterns.png" alt="XBI_1y_patterns.png"></a>
+    <div class="card-title">XBI_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="XLB_1y.png"><img src="XLB_1y.png" alt="XLB_1y.png"></a>
+    <div class="card-title">XLB_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="XLB_1y_patterns.png"><img src="XLB_1y_patterns.png" alt="XLB_1y_patterns.png"></a>
+    <div class="card-title">XLB_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="XLE_1y.png"><img src="XLE_1y.png" alt="XLE_1y.png"></a>
+    <div class="card-title">XLE_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="XLE_1y_patterns.png"><img src="XLE_1y_patterns.png" alt="XLE_1y_patterns.png"></a>
+    <div class="card-title">XLE_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="XLI_1y.png"><img src="XLI_1y.png" alt="XLI_1y.png"></a>
+    <div class="card-title">XLI_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="XLI_1y_patterns.png"><img src="XLI_1y_patterns.png" alt="XLI_1y_patterns.png"></a>
+    <div class="card-title">XLI_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="XLP_1y.png"><img src="XLP_1y.png" alt="XLP_1y.png"></a>
+    <div class="card-title">XLP_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="XLP_1y_patterns.png"><img src="XLP_1y_patterns.png" alt="XLP_1y_patterns.png"></a>
+    <div class="card-title">XLP_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="XLV_1y.png"><img src="XLV_1y.png" alt="XLV_1y.png"></a>
+    <div class="card-title">XLV_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="XLV_1y_patterns.png"><img src="XLV_1y_patterns.png" alt="XLV_1y_patterns.png"></a>
+    <div class="card-title">XLV_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="XME_1y.png"><img src="XME_1y.png" alt="XME_1y.png"></a>
+    <div class="card-title">XME_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="XME_1y_patterns.png"><img src="XME_1y_patterns.png" alt="XME_1y_patterns.png"></a>
+    <div class="card-title">XME_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^DJI_1y.png"><img src="^DJI_1y.png" alt="^DJI_1y.png"></a>
+    <div class="card-title">^DJI_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^DJI_1y_patterns.png"><img src="^DJI_1y_patterns.png" alt="^DJI_1y_patterns.png"></a>
+    <div class="card-title">^DJI_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^DJT_1y.png"><img src="^DJT_1y.png" alt="^DJT_1y.png"></a>
+    <div class="card-title">^DJT_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^DJT_1y_patterns.png"><img src="^DJT_1y_patterns.png" alt="^DJT_1y_patterns.png"></a>
+    <div class="card-title">^DJT_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^DJU_1y.png"><img src="^DJU_1y.png" alt="^DJU_1y.png"></a>
+    <div class="card-title">^DJU_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^DJU_1y_patterns.png"><img src="^DJU_1y_patterns.png" alt="^DJU_1y_patterns.png"></a>
+    <div class="card-title">^DJU_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^GSPC_1y.png"><img src="^GSPC_1y.png" alt="^GSPC_1y.png"></a>
+    <div class="card-title">^GSPC_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^GSPC_1y_patterns.png"><img src="^GSPC_1y_patterns.png" alt="^GSPC_1y_patterns.png"></a>
+    <div class="card-title">^GSPC_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^IXIC_1y.png"><img src="^IXIC_1y.png" alt="^IXIC_1y.png"></a>
+    <div class="card-title">^IXIC_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^IXIC_1y_patterns.png"><img src="^IXIC_1y_patterns.png" alt="^IXIC_1y_patterns.png"></a>
+    <div class="card-title">^IXIC_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^KRX_1y.png"><img src="^KRX_1y.png" alt="^KRX_1y.png"></a>
+    <div class="card-title">^KRX_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^KRX_1y_patterns.png"><img src="^KRX_1y_patterns.png" alt="^KRX_1y_patterns.png"></a>
+    <div class="card-title">^KRX_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^NYICDX_1y.png"><img src="^NYICDX_1y.png" alt="^NYICDX_1y.png"></a>
+    <div class="card-title">^NYICDX_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^NYICDX_1y_patterns.png"><img src="^NYICDX_1y_patterns.png" alt="^NYICDX_1y_patterns.png"></a>
+    <div class="card-title">^NYICDX_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^SOX_1y.png"><img src="^SOX_1y.png" alt="^SOX_1y.png"></a>
+    <div class="card-title">^SOX_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^SOX_1y_patterns.png"><img src="^SOX_1y_patterns.png" alt="^SOX_1y_patterns.png"></a>
+    <div class="card-title">^SOX_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="^TNX_1y.png"><img src="^TNX_1y.png" alt="^TNX_1y.png"></a>
+    <div class="card-title">^TNX_1y.png</div>
+  </div>
+  <div class="card">
+    <a href="^TNX_1y_patterns.png"><img src="^TNX_1y_patterns.png" alt="^TNX_1y_patterns.png"></a>
+    <div class="card-title">^TNX_1y_patterns.png</div>
+  </div>
+  <div class="card">
+    <a href="biti_1y_patterns.png"><img src="biti_1y_patterns.png" alt="biti_1y_patterns.png"></a>
+    <div class="card-title">biti_1y_patterns.png</div>
+  </div>
+</div>
 </body>
 </html>
