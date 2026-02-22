@@ -26,6 +26,6 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add charts/*.png
+          git add charts/*.png charts/index.html
           git commit -m "Weekly chart update" || echo "No changes"
           git push
