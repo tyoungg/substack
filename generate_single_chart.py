@@ -2,7 +2,7 @@ import os
 import yaml
 import pandas as pd
 import yfinance as yf
-from chart_utils import get_company_name, PatternDetector, plot_with_patterns_and_legend
+from chart_utils import get_company_name, PatternDetector, plot_with_patterns_and_legend, generate_html_file_list
 
 # ----------------------------
 # Load symbol and config
@@ -52,6 +52,9 @@ def main():
     ]
 
     plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns)
+
+    # Generate HTML index of all charts
+    generate_html_file_list("charts")
 
 if __name__ == "__main__":
     main()

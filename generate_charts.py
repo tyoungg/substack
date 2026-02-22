@@ -2,7 +2,7 @@ import os
 import yaml
 import pandas as pd
 import yfinance as yf
-from chart_utils import get_company_name, PatternDetector, plot_with_patterns_and_legend, plot_simple_chart
+from chart_utils import get_company_name, PatternDetector, plot_with_patterns_and_legend, plot_simple_chart, generate_html_file_list
 
 # ----------------------------
 # Load symbols and config
@@ -76,3 +76,6 @@ for symbol in symbols:
             # Plot simple chart with company name
             plot_simple_chart(clean_df, symbol, company_name)
             print(f"{symbol}: Simple chart generated")
+
+# Generate HTML index of all charts
+generate_html_file_list("charts")
