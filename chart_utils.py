@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -794,3 +795,32 @@ def plot_simple_chart(clean_df, symbol, company_name):
     )
     fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
     plt.close(fig)
+
+def generate_html_file_list(folder_path, output_file="index.html"):
+    """
+    Generates an HTML index of all PNG files in the specified folder.
+    The index.html is saved within the folder_path to ensure relative links work.
+    """
+    if not os.path.exists(folder_path):
+        return
+
+    # Filter for PNG files and sort them alphabetically
+    files = sorted([f for f in os.listdir(folder_path) if f.endswith(".png")])
+    output_path = os.path.join(folder_path, output_file)
+
+    with open(output_path, "w") as f:
+        f.write("<!DOCTYPE html>\n")
+        f.write("<html>\n")
+        f.write("<head>\n")
+        f.write("<title>Folder Contents</title>\n")
+        f.write("</head>\n")
+        f.write("<body>\n")
+        f.write(f"<h1>Contents of {folder_path}</h1>\n")
+        f.write("<ul>\n")
+        for file_name in files:
+            # Create a link for each file
+            f.write(f'<li><a href="{file_name}">{file_name}</a></li>\n')
+        f.write("</ul>\n")
+        f.write("</body>\n")
+        f.write("</html>\n")
+    print(f"'{output_path}' created successfully.")
