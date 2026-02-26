@@ -798,50 +798,43 @@ def plot_simple_chart(clean_df, symbol, company_name):
 
 def generate_html_file_list(image_folder, output_file="docs/allcharts.html"):
     """
-    Generates an HTML gallery index of all PNG files in image_folder.
-    The HTML is saved to output_file.
-    Relative links from output_file to images are correctly calculated.
+    Generates a responsive HTML gallery of all PNG images in image_folder.
+    The output_file specifies where to save the HTML.
+    URLs point to raw.githubusercontent.com for consistent behavior with other docs.
     """
-    if not os.path.exists(image_folder):
-        print(f"Error: Image folder '{image_folder}' does not exist.")
-        return
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    # Create output directory if it doesn't exist
-    output_dir = os.path.dirname(output_file)
-    if output_dir and not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    files = sorted([f for f in os.listdir(image_folder) if f.lower().endswith('.png')])
 
-    # Filter for PNG files and sort them alphabetically
-    files = sorted([f for f in os.listdir(image_folder) if f.endswith(".png")])
-
-    # Calculate relative path from output_dir to image_folder
-    rel_image_folder = os.path.relpath(image_folder, output_dir) if output_dir else image_folder
+    base_url = "https://raw.githubusercontent.com/tyoungg/substack/main/charts/"
 
     with open(output_file, "w") as f:
-        f.write("<!DOCTYPE html>\n")
-        f.write("<html>\n")
-        f.write("<head>\n")
-        f.write("<title>Chart Gallery</title>\n")
-        f.write("<style>\n")
-        f.write("  body { font-family: sans-serif; margin: 24px; background: #f7f7f7; }\n")
-        f.write("  h1 { text-align: center; }\n")
-        f.write("  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 20px; }\n")
-        f.write("  .card { background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }\n")
-        f.write("  .card img { width: 100%; height: auto; border-radius: 4px; }\n")
-        f.write("  .card-title { margin-top: 10px; text-align: center; font-weight: bold; font-size: 14px; color: #333; }\n")
-        f.write("</style>\n")
-        f.write("</head>\n")
-        f.write("<body>\n")
-        f.write(f"<h1>Chart Gallery: {image_folder}</h1>\n")
-        f.write('<div class="grid">\n')
+        f.write("<!DOCTYPE html>\n<html>\n<head>\n")
+        f.write("  <meta charset='utf-8' />\n")
+        f.write("  <title>substack-charts — All images</title>\n")
+        f.write("  <meta name='viewport' content='width=device-width,initial-scale=1' />\n")
+        f.write("  <style>\n")
+        f.write("    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 24px; background:#f7f7f7; color:#111 }\n")
+        f.write("    h1 { margin-bottom: 8px; }\n")
+        f.write("    .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 12px; }\n")
+        f.write("    .card { border: 1px solid #e6e6e6; padding: 8px; border-radius: 6px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.03); }\n")
+        f.write("    .card img { max-width: 100%; height: auto; display:block; margin: 0 auto; }\n")
+        f.write("    .fname { font-size: 12px; color:#444; margin-top:6px; word-break:break-word; text-align:center; }\n")
+        f.write("    .notice { color:#666; font-size:14px; margin-bottom:12px; }\n")
+        f.write("    a.repo { font-size:13px }\n")
+        f.write("    a { text-decoration: none; color: inherit; }\n")
+        f.write("  </style>\n</head>\n<body>\n")
+        f.write("  <h1>All images in charts/</h1>\n")
+        f.write("  <div class='notice'>This is a static gallery that embeds the images stored in the charts/ folder of this repository.</div>\n")
+        f.write("  <div class='grid'>\n")
         for file_name in files:
-            # Use relative path for image source and link
-            img_src = os.path.join(rel_image_folder, file_name)
-            f.write('  <div class="card">\n')
-            f.write(f'    <a href="{img_src}"><img src="{img_src}" alt="{file_name}"></a>\n')
-            f.write(f'    <div class="card-title">{file_name}</div>\n')
-            f.write('  </div>\n')
-        f.write("</div>\n")
-        f.write("</body>\n")
-        f.write("</html>\n")
-    print(f"'{output_file}' created successfully.")
+            img_src = f"{base_url}{file_name}"
+            f.write(f'    <div class="card">\n')
+            f.write(f'      <a href="{img_src}" target="_blank"><img src="{img_src}" alt="{file_name}"></a>\n')
+            f.write(f'      <div class="fname">{file_name}</div>\n')
+            f.write(f'    </div>\n')
+        f.write("  </div>\n")
+        f.write("  <p style='margin-top:20px;font-size:13px'>Repo: <a class='repo' href='https://github.com/tyoungg/substack'>tyoungg/substack</a></p>\n")
+        f.write("</body>\n</html>\n")
+    print(f"Gallery created successfully: {output_file}")
