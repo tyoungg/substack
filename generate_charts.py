@@ -77,5 +77,5 @@ for symbol in symbols:
             plot_simple_chart(clean_df, symbol, company_name)
             print(f"{symbol}: Simple chart generated")
 
-# Generate HTML index of all charts
-generate_html_file_list("charts")
+# Generate HTML index of all charts in the docs folder
+generate_html_file_list("charts", "docs/allcharts.html")

@@ -53,8 +53,8 @@ def main():
 
     plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns)
 
-    # Generate HTML index of all charts
-    generate_html_file_list("charts")
+    # Generate HTML index of all charts in the docs folder
+    generate_html_file_list("charts", "docs/allcharts.html")
 
 if __name__ == "__main__":
     main()
