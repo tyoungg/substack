@@ -796,19 +796,28 @@ def plot_simple_chart(clean_df, symbol, company_name):
     fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-def generate_html_file_list(folder_path, output_file="index.html"):
+def generate_html_file_list(image_folder, output_file="docs/allcharts.html"):
     """
-    Generates an HTML gallery index of all PNG files in the specified folder.
-    The index.html is saved within the folder_path to ensure relative links work.
+    Generates an HTML gallery index of all PNG files in image_folder.
+    The HTML is saved to output_file.
+    Relative links from output_file to images are correctly calculated.
     """
-    if not os.path.exists(folder_path):
+    if not os.path.exists(image_folder):
+        print(f"Error: Image folder '{image_folder}' does not exist.")
         return
 
-    # Filter for PNG files and sort them alphabetically
-    files = sorted([f for f in os.listdir(folder_path) if f.endswith(".png")])
-    output_path = os.path.join(folder_path, output_file)
+    # Create output directory if it doesn't exist
+    output_dir = os.path.dirname(output_file)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
 
-    with open(output_path, "w") as f:
+    # Filter for PNG files and sort them alphabetically
+    files = sorted([f for f in os.listdir(image_folder) if f.endswith(".png")])
+
+    # Calculate relative path from output_dir to image_folder
+    rel_image_folder = os.path.relpath(image_folder, output_dir) if output_dir else image_folder
+
+    with open(output_file, "w") as f:
         f.write("<!DOCTYPE html>\n")
         f.write("<html>\n")
         f.write("<head>\n")
@@ -823,14 +832,16 @@ def generate_html_file_list(folder_path, output_file="index.html"):
         f.write("</style>\n")
         f.write("</head>\n")
         f.write("<body>\n")
-        f.write(f"<h1>Chart Gallery: {folder_path}</h1>\n")
+        f.write(f"<h1>Chart Gallery: {image_folder}</h1>\n")
         f.write('<div class="grid">\n')
         for file_name in files:
+            # Use relative path for image source and link
+            img_src = os.path.join(rel_image_folder, file_name)
             f.write('  <div class="card">\n')
-            f.write(f'    <a href="{file_name}"><img src="{file_name}" alt="{file_name}"></a>\n')
+            f.write(f'    <a href="{img_src}"><img src="{img_src}" alt="{file_name}"></a>\n')
             f.write(f'    <div class="card-title">{file_name}</div>\n')
             f.write('  </div>\n')
         f.write("</div>\n")
         f.write("</body>\n")
         f.write("</html>\n")
-    print(f"'{output_path}' created successfully.")
+    print(f"'{output_file}' created successfully.")
