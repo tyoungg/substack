@@ -807,7 +807,7 @@ def plot_simple_chart(clean_df, symbol, company_name, chart_title=None, filename
     fig.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-def generate_html_file_list(image_folder, output_file="docs/allcharts.html", filter_str=None, exclude_str=None, page_title=None):
+def generate_html_file_list(image_folder, output_file="docs/allcharts.html", filter_str=None, exclude_str=None, page_title=None, valid_symbols=None):
     """
     Generates a responsive HTML gallery of PNG images in image_folder.
     The output_file specifies where to save the HTML.
@@ -821,6 +821,7 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html", fil
         if f.lower().endswith('.png')
         and (filter_str is None or filter_str.lower() in f.lower())
         and (exclude_str is None or exclude_str.lower() not in f.lower())
+        and (valid_symbols is None or any(f.startswith(f"{s}_") for s in valid_symbols))
     ])
 
     if page_title is None:
