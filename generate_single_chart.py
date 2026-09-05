@@ -94,9 +94,16 @@ def main():
             filename=f"charts/{symbol}_weekly_patterns.png"
         )
 
+    # Load all symbols from symbols.yaml so galleries remain complete
+    valid_symbols = [symbol]
+    if os.path.exists("symbols.yaml"):
+        with open("symbols.yaml", "r") as f:
+            all_symbols_config = yaml.safe_load(f)
+            valid_symbols = list(set(all_symbols_config.get("symbols", []) + [symbol]))
+
     # Generate HTML indices in docs folder
-    generate_html_file_list("charts", "docs/allcharts.html", exclude_str="weekly", page_title="substack-charts — All images")
-    generate_html_file_list("charts", "docs/weeklies.html", filter_str="weekly", page_title="substack-charts — Weekly images")
+    generate_html_file_list("charts", "docs/allcharts.html", exclude_str="weekly", page_title="substack-charts — All images", valid_symbols=valid_symbols)
+    generate_html_file_list("charts", "docs/weeklies.html", filter_str="weekly", page_title="substack-charts — Weekly images", valid_symbols=valid_symbols)
 
 if __name__ == "__main__":
     main()
