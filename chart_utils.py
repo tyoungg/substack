@@ -440,7 +440,7 @@ class PatternDetector:
 # ----------------------------
 # Plotting with patterns and legend
 # ----------------------------
-def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
+def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns, chart_title=None, filename=None):
     """
     Plots a financial chart with detected technical analysis patterns.
 
@@ -460,7 +460,13 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
         company_name (str): The name of the company.
         patterns (list): A list of dictionaries, where each dictionary represents
                          a detected pattern and its key points.
+        chart_title (str, optional): Custom title for the chart.
+        filename (str, optional): Custom filepath to save the output chart image.
     """
+    if chart_title is None:
+        chart_title = f"{company_name} ({symbol}) — 1 Year Daily Chart"
+    if filename is None:
+        filename = f"charts/{symbol}_1y_patterns.png"
     addplots = []
     legend_handles = []
     deferred_drawings = []
@@ -761,7 +767,7 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     fig, axes = mpf.plot(
         clean_df, type="candle", style="yahoo",
         addplot=addplots if addplots else None,
-        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
+        title=chart_title,
         figsize=(16, 9), returnfig=True, tight_layout=True,
     )
 
@@ -779,40 +785,53 @@ def plot_with_patterns_and_legend(clean_df, symbol, company_name, patterns):
     else:
         print(f"{symbol}: No patterns detected")
 
-    fig.savefig(f"charts/{symbol}_1y_patterns.png", dpi=300, bbox_inches='tight')
+    fig.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-def plot_simple_chart(clean_df, symbol, company_name):
+def plot_simple_chart(clean_df, symbol, company_name, chart_title=None, filename=None):
     """Plot clean chart without patterns with custom x-axis"""
+    if chart_title is None:
+        chart_title = f"{company_name} ({symbol}) — 1 Year Daily Chart"
+    if filename is None:
+        filename = f"charts/{symbol}_1y.png"
+
     fig, axes = mpf.plot(
         clean_df,
         type="candle",
         style="yahoo",
-        title=f"{company_name} ({symbol}) — 1 Year Daily Chart",
+        title=chart_title,
         figsize=(16, 9),
         returnfig=True,
         tight_layout=True,
     )
-    fig.savefig(f"charts/{symbol}_1y.png", dpi=300, bbox_inches='tight')
+    fig.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
-def generate_html_file_list(image_folder, output_file="docs/allcharts.html"):
+def generate_html_file_list(image_folder, output_file="docs/allcharts.html", filter_str=None, exclude_str=None, page_title=None):
     """
-    Generates a responsive HTML gallery of all PNG images in image_folder.
+    Generates a responsive HTML gallery of PNG images in image_folder.
     The output_file specifies where to save the HTML.
     URLs point to raw.githubusercontent.com for consistent behavior with other docs.
     """
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    files = sorted([f for f in os.listdir(image_folder) if f.lower().endswith('.png')])
+    files = sorted([
+        f for f in os.listdir(image_folder)
+        if f.lower().endswith('.png')
+        and (filter_str is None or filter_str.lower() in f.lower())
+        and (exclude_str is None or exclude_str.lower() not in f.lower())
+    ])
+
+    if page_title is None:
+        page_title = "substack-charts — All images"
 
     base_url = "https://raw.githubusercontent.com/tyoungg/substack/main/charts/"
 
     with open(output_file, "w") as f:
         f.write("<!DOCTYPE html>\n<html>\n<head>\n")
         f.write("  <meta charset='utf-8' />\n")
-        f.write("  <title>substack-charts — All images</title>\n")
+        f.write(f"  <title>{page_title}</title>\n")
         f.write("  <meta name='viewport' content='width=device-width,initial-scale=1' />\n")
         f.write("  <style>\n")
         f.write("    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 24px; background:#f7f7f7; color:#111 }\n")
@@ -825,7 +844,7 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html"):
         f.write("    a.repo { font-size:13px }\n")
         f.write("    a { text-decoration: none; color: inherit; }\n")
         f.write("  </style>\n</head>\n<body>\n")
-        f.write("  <h1>All images in charts/</h1>\n")
+        f.write(f"  <h1>{page_title}</h1>\n")
         f.write("  <div class='notice'>This is a static gallery that embeds the images stored in the charts/ folder of this repository.</div>\n")
         f.write("  <div class='grid'>\n")
         for file_name in files:

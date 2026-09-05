@@ -5,8 +5,8 @@ This project is a Python script that generates financial charts for a list of st
 ## Features
 
 - **Data Fetching**: Downloads historical stock data from Yahoo Finance using the `yfinance` library.
-- **Chart Generation**: Creates clean and informative candlestick charts using `mplfinance`.
-- **Technical Pattern Detection**: Includes a `PatternDetector` class to identify common technical analysis patterns, such as:
+- **Chart Generation**: Creates clean daily and weekly candlestick charts using `mplfinance`.
+- **Technical Pattern Detection**: Includes a `PatternDetector` class to identify common technical analysis patterns on daily and weekly charts, such as:
   - Head and Shoulders
   - Double Top and Double Bottom
   - Ascending, Descending, and Symmetrical Triangles
@@ -58,6 +58,11 @@ This project is a Python script that generates financial charts for a list of st
    python generate_single_chart.py
    ```
    The generated chart will be saved in the `charts` directory.
+
+### Interactive HTML Galleries
+
+- **All Charts Gallery**: Located at `docs/allcharts.html` (includes daily charts).
+- **Weeklies Gallery**: Located at `docs/weeklies.html` (includes weekly charts with technical indicators).
 
 ### Generating a Chart via GitHub Actions
 
