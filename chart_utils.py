@@ -807,6 +807,40 @@ def plot_simple_chart(clean_df, symbol, company_name, chart_title=None, filename
     fig.savefig(filename, dpi=300, bbox_inches='tight')
     plt.close(fig)
 
+SYMBOL_DISPLAY_NAMES = {
+    "^DJI": "DJIA",
+    "^DJT": "Transports",
+    "^DJU": "UTES",
+    "^GSPC": "S&P500",
+    "^IXIC": "NASDAQ",
+    "IWM": "IWM",
+    "QQQ": "QQQ",
+    "QQQJ": "QQQJ- the juniors",
+    "^SOX": "PHLX Semiconductor",
+    "^KRX": "KBW BANK index",
+    "XLI": "Industrial Select",
+    "IGV": "Tech-Software Sector",
+    "XLE": "Energy Select Sector",
+    "OIH": "VanEck  Oil Services",
+    "XME": "Metals & Mining",
+    "URA": "Uranium",
+    "LIT": "Lithium & Battery Tech",
+    "PALL": "Palladium",
+    "GLD": "Gold",
+    "XLB": "Materials Select Sector",
+    "XLP": "Staples SPDR",
+    "XLV": "Health Care Select Sector SPDR",
+    "ITB": "iShares US Home Construction",
+    "IYR": "iShares US Real Estate",
+    "XBI": "S&P Biotech",
+    "VGK": "European Stock Index",
+    "INDA": "MSCI India",
+    "KWEB": "KraneShares CSI China Internet",
+    "^TNX": "Bondaleros",
+    "^NYICDX": "US DOllar",
+    "DX-Y.NYB": "US DOllar",
+}
+
 def generate_html_file_list(image_folder, output_file="docs/allcharts.html", filter_str=None, exclude_str=None, page_title=None, valid_symbols=None):
     """
     Generates a responsive HTML gallery of PNG images in image_folder.
@@ -816,13 +850,30 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html", fil
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    files = sorted([
+    all_files = [
         f for f in os.listdir(image_folder)
         if f.lower().endswith('.png')
         and (filter_str is None or filter_str.lower() in f.lower())
         and (exclude_str is None or exclude_str.lower() not in f.lower())
         and (valid_symbols is None or any(f.startswith(f"{s}_") for s in valid_symbols))
-    ])
+    ]
+
+    def get_symbol_for_file(filename):
+        if valid_symbols:
+            for s in valid_symbols:
+                if filename.startswith(f"{s}_"):
+                    return s
+        return None
+
+    def sort_key(filename):
+        sym = get_symbol_for_file(filename)
+        if sym and valid_symbols and sym in valid_symbols:
+            sym_index = valid_symbols.index(sym)
+        else:
+            sym_index = 9999
+        return (sym_index, filename)
+
+    files = sorted(all_files, key=sort_key)
 
     if page_title is None:
         page_title = "substack-charts — All images"
@@ -850,9 +901,11 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html", fil
         f.write("  <div class='grid'>\n")
         for file_name in files:
             img_src = f"{base_url}{file_name}"
+            sym = get_symbol_for_file(file_name)
+            display_name = SYMBOL_DISPLAY_NAMES.get(sym, file_name) if sym else file_name
             f.write(f'    <div class="card">\n')
-            f.write(f'      <a href="{img_src}" target="_blank"><img src="{img_src}" alt="{file_name}"></a>\n')
-            f.write(f'      <div class="fname">{file_name}</div>\n')
+            f.write(f'      <a href="{img_src}" target="_blank"><img src="{img_src}" alt="{display_name}"></a>\n')
+            f.write(f'      <div class="fname">{display_name}</div>\n')
             f.write(f'    </div>\n')
         f.write("  </div>\n")
         f.write("  <p style='margin-top:20px;font-size:13px'>Repo: <a class='repo' href='https://github.com/tyoungg/substack'>tyoungg/substack</a></p>\n")
