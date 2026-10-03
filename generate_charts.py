@@ -51,6 +51,7 @@ for symbol in symbols:
         },
         index=pd.to_datetime(df.index)
     )
+    clean_df = clean_df[(clean_df["Open"] > 0) & (clean_df["High"] > 0) & (clean_df["Low"] > 0) & (clean_df["Close"] > 0)]
 
     for enable_patterns in [True, False]:
         print(f"  Generating chart for enable_patterns={enable_patterns}...")
@@ -102,6 +103,7 @@ for symbol in symbols:
             },
             index=pd.to_datetime(df_weekly.index)
         )
+        clean_df_weekly = clean_df_weekly[(clean_df_weekly["Open"] > 0) & (clean_df_weekly["High"] > 0) & (clean_df_weekly["Low"] > 0) & (clean_df_weekly["Close"] > 0)]
 
         print(f"  Generating weekly chart with technical indicators for {symbol}...")
         detector_weekly = PatternDetector(clean_df_weekly)

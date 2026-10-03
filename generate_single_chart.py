@@ -37,6 +37,7 @@ def main():
         "Close":  df["Close"].to_numpy().astype("float64").ravel(),
         "Volume": df["Volume"].to_numpy().astype("float64").ravel(),
     }, index=pd.to_datetime(df.index))
+    clean_df = clean_df[(clean_df["Open"] > 0) & (clean_df["High"] > 0) & (clean_df["Low"] > 0) & (clean_df["Close"] > 0)]
 
     detector = PatternDetector(clean_df)
     patterns = [
@@ -71,6 +72,7 @@ def main():
             "Close":  df_weekly["Close"].to_numpy().astype("float64").ravel(),
             "Volume": df_weekly["Volume"].to_numpy().astype("float64").ravel(),
         }, index=pd.to_datetime(df_weekly.index))
+        clean_df_weekly = clean_df_weekly[(clean_df_weekly["Open"] > 0) & (clean_df_weekly["High"] > 0) & (clean_df_weekly["Low"] > 0) & (clean_df_weekly["Close"] > 0)]
 
         detector_weekly = PatternDetector(clean_df_weekly)
         patterns_weekly = [
