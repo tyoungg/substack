@@ -7,6 +7,9 @@
   <style>
     body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 24px; background:#f7f7f7; color:#111 }
     h1 { margin-bottom: 8px; }
+    .nav { margin-bottom: 16px; font-size: 14px; color: #444; }
+    .nav a { color: #0066cc; text-decoration: none; font-weight: 500; }
+    .nav a:hover { text-decoration: underline; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 12px; }
     .card { border: 1px solid #e6e6e6; padding: 8px; border-radius: 6px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.03); }
     .card img { max-width: 100%; height: auto; display:block; margin: 0 auto; }
@@ -41,8 +44,13 @@
 </head>
 <body>
   <h1>All images in charts/</h1>
-  <div class="notice">This is a static gallery that embeds the images stored in the charts folder of this repository. Images are served from raw user content and will update automatically when the files are replaced. 
-	  To see charts without technicals go to <a href="index.html">candlesticks</a>  </div>
+  <div class="nav">
+    <strong>Views:</strong>
+    <a href="index.html">Daily Candlesticks</a> |
+    <a href="index2.html">Daily Technicals</a> |
+    <a href="weeklies.html">Weekly Technicals</a>
+  </div>
+  <div class="notice">This is a static gallery that embeds the images stored in the charts folder of this repository. Images are served from raw user content and will update automatically when the files are replaced. To see charts without technicals go to <a href="index.html">Daily Candlesticks</a> or view <a href="weeklies.html">Weekly Technicals</a>.</div>
   <div class="grid">
 	<div class="card"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJI_1y_patterns.png" alt="DJIA"><div class="fname">DJIA</div></div>
 	
