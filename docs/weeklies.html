@@ -7,6 +7,9 @@
   <style>
     body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 24px; background:#f7f7f7; color:#111 }
     h1 { margin-bottom: 8px; }
+    .nav { margin-bottom: 16px; font-size: 14px; color: #444; }
+    .nav a { color: #0066cc; text-decoration: none; font-weight: 500; }
+    .nav a:hover { text-decoration: underline; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 12px; }
     .card { border: 1px solid #e6e6e6; padding: 8px; border-radius: 6px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.03); }
     .card img { max-width: 100%; height: auto; display:block; margin: 0 auto; }
@@ -14,137 +17,197 @@
     .notice { color:#666; font-size:14px; margin-bottom:12px; }
     a.repo { font-size:13px }
     a { text-decoration: none; color: inherit; }
+    details { margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; }
+    summary { cursor: pointer; font-weight: 600; }
+    details[open] { background: #f5f7fa; }
+    details p { margin: 0.5rem 0 0; color: #333; }
   </style>
 </head>
 <body>
   <h1>substack-charts — Weekly images</h1>
+  <div class='nav'>
+    <strong>Views:</strong>
+    <a href='index.html'>Daily Candlesticks</a> |
+    <a href='index2.html'>Daily Technicals</a> |
+    <a href='weeklies.html'>Weekly Technicals</a>
+  </div>
   <div class='notice'>This is a static gallery that embeds the images stored in the charts/ folder of this repository.</div>
   <div class='grid'>
     <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJI_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJI_weekly_patterns.png" alt="DJIA"></a>
-      <div class="fname">DJIA</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJT_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJT_weekly_patterns.png" alt="Transports"></a>
-      <div class="fname">Transports</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJU_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJU_weekly_patterns.png" alt="UTES"></a>
-      <div class="fname">UTES</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^GSPC_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^GSPC_weekly_patterns.png" alt="S&P500"></a>
-      <div class="fname">S&P500</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^IXIC_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^IXIC_weekly_patterns.png" alt="NASDAQ"></a>
-      <div class="fname">NASDAQ</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IWM_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IWM_weekly_patterns.png" alt="IWM"></a>
-      <div class="fname">IWM</div>
-    </div>
-    <div class="card">
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/QQQ_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/QQQ_weekly_patterns.png" alt="QQQ"></a>
       <div class="fname">QQQ</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/QQQJ_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/QQQJ_weekly_patterns.png" alt="QQQJ- the juniors"></a>
-      <div class="fname">QQQJ- the juniors</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^SOX_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^SOX_weekly_patterns.png" alt="PHLX Semiconductor"></a>
-      <div class="fname">PHLX Semiconductor</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^KRX_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^KRX_weekly_patterns.png" alt="KBW BANK index"></a>
-      <div class="fname">KBW BANK index</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLI_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLI_weekly_patterns.png" alt="Industrial Select"></a>
-      <div class="fname">Industrial Select</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IGV_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IGV_weekly_patterns.png" alt="Tech-Software Sector"></a>
-      <div class="fname">Tech-Software Sector</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLE_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLE_weekly_patterns.png" alt="Energy Select Sector"></a>
-      <div class="fname">Energy Select Sector</div>
     </div>
     <div class="card">
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/OIH_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/OIH_weekly_patterns.png" alt="VanEck  Oil Services"></a>
       <div class="fname">VanEck  Oil Services</div>
     </div>
     <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XME_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XME_weekly_patterns.png" alt="Metals & Mining"></a>
-      <div class="fname">Metals & Mining</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/URA_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/URA_weekly_patterns.png" alt="Uranium"></a>
-      <div class="fname">Uranium</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/LIT_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/LIT_weekly_patterns.png" alt="Lithium & Battery Tech"></a>
-      <div class="fname">Lithium & Battery Tech</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/PALL_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/PALL_weekly_patterns.png" alt="Palladium"></a>
-      <div class="fname">Palladium</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/GLD_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/GLD_weekly_patterns.png" alt="Gold"></a>
-      <div class="fname">Gold</div>
-    </div>
-    <div class="card">
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLB_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLB_weekly_patterns.png" alt="Materials Select Sector"></a>
       <div class="fname">Materials Select Sector</div>
     </div>
     <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLP_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLP_weekly_patterns.png" alt="Staples SPDR"></a>
-      <div class="fname">Staples SPDR</div>
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJT_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJT_weekly_patterns.png" alt="Transports"></a>
+      <div class="fname">Transports</div>
     </div>
     <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLV_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLV_weekly_patterns.png" alt="Health Care Select Sector SPDR"></a>
-      <div class="fname">Health Care Select Sector SPDR</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/ITB_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/ITB_weekly_patterns.png" alt="iShares US Home Construction"></a>
-      <div class="fname">iShares US Home Construction</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IYR_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IYR_weekly_patterns.png" alt="iShares US Real Estate"></a>
-      <div class="fname">iShares US Real Estate</div>
-    </div>
-    <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XBI_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XBI_weekly_patterns.png" alt="S&P Biotech"></a>
-      <div class="fname">S&P Biotech</div>
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^IXIC_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^IXIC_weekly_patterns.png" alt="NASDAQ"></a>
+      <div class="fname">NASDAQ</div>
     </div>
     <div class="card">
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/VGK_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/VGK_weekly_patterns.png" alt="European Stock Index"></a>
       <div class="fname">European Stock Index</div>
     </div>
     <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^TNX_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^TNX_weekly_patterns.png" alt="Bondaleros"></a>
+      <div class="fname">Bondaleros</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/DX-Y.NYB_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/DX-Y.NYB_weekly_patterns.png" alt="US DOllar"></a>
+      <div class="fname">US DOllar</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IGV_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IGV_weekly_patterns.png" alt="Tech-Software Sector"></a>
+      <div class="fname">Tech-Software Sector</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLP_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLP_weekly_patterns.png" alt="Staples SPDR"></a>
+      <div class="fname">Staples SPDR</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/PALL_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/PALL_weekly_patterns.png" alt="Palladium"></a>
+      <div class="fname">Palladium</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLV_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLV_weekly_patterns.png" alt="Health Care Select Sector SPDR"></a>
+      <div class="fname">Health Care Select Sector SPDR</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/GLD_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/GLD_weekly_patterns.png" alt="Gold"></a>
+      <div class="fname">Gold</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJU_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJU_weekly_patterns.png" alt="UTES"></a>
+      <div class="fname">UTES</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^KRX_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^KRX_weekly_patterns.png" alt="KBW BANK index"></a>
+      <div class="fname">KBW BANK index</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/ITB_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/ITB_weekly_patterns.png" alt="iShares US Home Construction"></a>
+      <div class="fname">iShares US Home Construction</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IWM_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IWM_weekly_patterns.png" alt="IWM"></a>
+      <div class="fname">IWM</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^GSPC_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^GSPC_weekly_patterns.png" alt="S&P500"></a>
+      <div class="fname">S&P500</div>
+    </div>
+    <div class="card">
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/INDA_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/INDA_weekly_patterns.png" alt="MSCI India"></a>
       <div class="fname">MSCI India</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XME_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XME_weekly_patterns.png" alt="Metals & Mining"></a>
+      <div class="fname">Metals & Mining</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IYR_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/IYR_weekly_patterns.png" alt="iShares US Real Estate"></a>
+      <div class="fname">iShares US Real Estate</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/KR_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/KR_weekly_patterns.png" alt="KR_weekly_patterns.png"></a>
+      <div class="fname">KR_weekly_patterns.png</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLE_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLE_weekly_patterns.png" alt="Energy Select Sector"></a>
+      <div class="fname">Energy Select Sector</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^SOX_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^SOX_weekly_patterns.png" alt="PHLX Semiconductor"></a>
+      <div class="fname">PHLX Semiconductor</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLI_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XLI_weekly_patterns.png" alt="Industrial Select"></a>
+      <div class="fname">Industrial Select</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/URA_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/URA_weekly_patterns.png" alt="Uranium"></a>
+      <div class="fname">Uranium</div>
     </div>
     <div class="card">
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/KWEB_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/KWEB_weekly_patterns.png" alt="KraneShares CSI China Internet"></a>
       <div class="fname">KraneShares CSI China Internet</div>
     </div>
     <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^TNX_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^TNX_weekly_patterns.png" alt="Bondaleros"></a>
-      <div class="fname">Bondaleros</div>
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/QQQJ_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/QQQJ_weekly_patterns.png" alt="QQQJ- the juniors"></a>
+      <div class="fname">QQQJ- the juniors</div>
     </div>
     <div class="card">
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^NYICDX_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^NYICDX_weekly_patterns.png" alt="US DOllar"></a>
       <div class="fname">US DOllar</div>
     </div>
     <div class="card">
-      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/DX-Y.NYB_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/DX-Y.NYB_weekly_patterns.png" alt="US DOllar"></a>
-      <div class="fname">US DOllar</div>
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJI_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/^DJI_weekly_patterns.png" alt="DJIA"></a>
+      <div class="fname">DJIA</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/LIT_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/LIT_weekly_patterns.png" alt="Lithium & Battery Tech"></a>
+      <div class="fname">Lithium & Battery Tech</div>
+    </div>
+    <div class="card">
+      <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XBI_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/XBI_weekly_patterns.png" alt="S&P Biotech"></a>
+      <div class="fname">S&P Biotech</div>
     </div>
   </div>
+
+  <h2>Detected Patterns</h2>
+  <details>
+    <summary><strong>Head and Shoulders</strong></summary>
+    <p>Identifies a chart formation that often signals a bullish-to-bearish trend reversal. It is commonly used to anticipate potential breakdowns after an extended uptrend.</p>
+  </details>
+  <details>
+    <summary><strong>Double Top and Double Bottom</strong></summary>
+    <p>Patterns that form when price tests the same level twice without breaking through. These often suggest exhaustion and a potential reversal at key support or resistance.</p>
+  </details>
+  <details>
+    <summary><strong>Triangles</strong></summary>
+    <p>Consolidation formations where price range contracts over time. Ascending, descending, and symmetrical triangles often precede volatility expansion.</p>
+  </details>
+  <details>
+    <summary><strong>Flags</strong></summary>
+    <p>Short-term continuation patterns that form after a sharp price move. They typically represent brief pauses before the prevailing trend resumes.</p>
+  </details>
+  <details>
+    <summary><strong>Cup and Handle</strong></summary>
+    <p>A bullish continuation pattern resembling a rounded base followed by shallow consolidation. It is often used to identify breakout opportunities within longer-term uptrends.</p>
+  </details>
+  <details>
+    <summary><strong>Price Channels / Channel</strong></summary>
+    <p>Two parallel trendlines that contain price movement within a controlled trend. Channels help visualize trend strength and potential support and resistance zones.</p>
+  </details>
+  <details>
+    <summary><strong>Trendline</strong></summary>
+    <p>A line connecting key highs or lows to indicate directional pressure. Breaks in trendlines may signal shifts in momentum or regime.</p>
+  </details>
+  <details>
+    <summary><strong>Horizontal Zone</strong></summary>
+    <p>Represents areas of price memory where trading activity previously clustered. These zones often act as support or resistance when revisited.</p>
+  </details>
+  <details>
+    <summary><strong>Shelf</strong></summary>
+    <p>A period of sideways consolidation following directional movement. Shelves often precede either continuation or rejection depending on context.</p>
+  </details>
+  <details>
+    <summary><strong>Regime Start</strong></summary>
+    <p>Marks a contextual reset in market behavior or structure. It is useful for segmenting analysis and avoiding assumptions based on prior conditions.</p>
+  </details>
+  <details>
+    <summary><strong>Threat Line</strong></summary>
+    <p>A boundary representing elevated risk to the current pattern or bias. A breach of the threat line may invalidate the prevailing interpretation.</p>
+  </details>
   <p style='margin-top:20px;font-size:13px'>Repo: <a class='repo' href='https://github.com/tyoungg/substack'>tyoungg/substack</a></p>
 </body>
 </html>

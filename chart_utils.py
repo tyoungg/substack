@@ -841,7 +841,7 @@ SYMBOL_DISPLAY_NAMES = {
     "DX-Y.NYB": "US DOllar",
 }
 
-def generate_html_file_list(image_folder, output_file="docs/allcharts.html", filter_str=None, exclude_str=None, page_title=None, valid_symbols=None):
+def generate_html_file_list(image_folder, output_file="docs/allcharts.html", filter_str=None, exclude_str=None, page_title=None, valid_symbols=None, include_patterns_explanation=False):
     """
     Generates a responsive HTML gallery of PNG images in image_folder.
     The output_file specifies where to save the HTML.
@@ -880,6 +880,12 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html", fil
 
     base_url = "https://raw.githubusercontent.com/tyoungg/substack/main/charts/"
 
+    # Auto-detect whether to include patterns explanation for weeklies if not explicitly provided
+    if include_patterns_explanation or (filter_str and "weekly" in filter_str.lower()):
+        include_patterns = True
+    else:
+        include_patterns = False
+
     with open(output_file, "w") as f:
         f.write("<!DOCTYPE html>\n<html>\n<head>\n")
         f.write("  <meta charset='utf-8' />\n")
@@ -888,6 +894,9 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html", fil
         f.write("  <style>\n")
         f.write("    body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 24px; background:#f7f7f7; color:#111 }\n")
         f.write("    h1 { margin-bottom: 8px; }\n")
+        f.write("    .nav { margin-bottom: 16px; font-size: 14px; color: #444; }\n")
+        f.write("    .nav a { color: #0066cc; text-decoration: none; font-weight: 500; }\n")
+        f.write("    .nav a:hover { text-decoration: underline; }\n")
         f.write("    .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 12px; }\n")
         f.write("    .card { border: 1px solid #e6e6e6; padding: 8px; border-radius: 6px; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.03); }\n")
         f.write("    .card img { max-width: 100%; height: auto; display:block; margin: 0 auto; }\n")
@@ -895,8 +904,18 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html", fil
         f.write("    .notice { color:#666; font-size:14px; margin-bottom:12px; }\n")
         f.write("    a.repo { font-size:13px }\n")
         f.write("    a { text-decoration: none; color: inherit; }\n")
+        f.write("    details { margin-bottom: 0.75rem; padding: 0.5rem 0.75rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; }\n")
+        f.write("    summary { cursor: pointer; font-weight: 600; }\n")
+        f.write("    details[open] { background: #f5f7fa; }\n")
+        f.write("    details p { margin: 0.5rem 0 0; color: #333; }\n")
         f.write("  </style>\n</head>\n<body>\n")
         f.write(f"  <h1>{page_title}</h1>\n")
+        f.write("  <div class='nav'>\n")
+        f.write("    <strong>Views:</strong>\n")
+        f.write("    <a href='index.html'>Daily Candlesticks</a> | \n")
+        f.write("    <a href='index2.html'>Daily Technicals</a> | \n")
+        f.write("    <a href='weeklies.html'>Weekly Technicals</a>\n")
+        f.write("  </div>\n")
         f.write("  <div class='notice'>This is a static gallery that embeds the images stored in the charts/ folder of this repository.</div>\n")
         f.write("  <div class='grid'>\n")
         for file_name in files:
@@ -908,6 +927,21 @@ def generate_html_file_list(image_folder, output_file="docs/allcharts.html", fil
             f.write(f'      <div class="fname">{display_name}</div>\n')
             f.write(f'    </div>\n')
         f.write("  </div>\n")
+
+        if include_patterns:
+            f.write("\n  <h2>Detected Patterns</h2>\n")
+            f.write("  <details>\n    <summary><strong>Head and Shoulders</strong></summary>\n    <p>Identifies a chart formation that often signals a bullish-to-bearish trend reversal. It is commonly used to anticipate potential breakdowns after an extended uptrend.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Double Top and Double Bottom</strong></summary>\n    <p>Patterns that form when price tests the same level twice without breaking through. These often suggest exhaustion and a potential reversal at key support or resistance.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Triangles</strong></summary>\n    <p>Consolidation formations where price range contracts over time. Ascending, descending, and symmetrical triangles often precede volatility expansion.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Flags</strong></summary>\n    <p>Short-term continuation patterns that form after a sharp price move. They typically represent brief pauses before the prevailing trend resumes.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Cup and Handle</strong></summary>\n    <p>A bullish continuation pattern resembling a rounded base followed by shallow consolidation. It is often used to identify breakout opportunities within longer-term uptrends.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Price Channels / Channel</strong></summary>\n    <p>Two parallel trendlines that contain price movement within a controlled trend. Channels help visualize trend strength and potential support and resistance zones.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Trendline</strong></summary>\n    <p>A line connecting key highs or lows to indicate directional pressure. Breaks in trendlines may signal shifts in momentum or regime.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Horizontal Zone</strong></summary>\n    <p>Represents areas of price memory where trading activity previously clustered. These zones often act as support or resistance when revisited.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Shelf</strong></summary>\n    <p>A period of sideways consolidation following directional movement. Shelves often precede either continuation or rejection depending on context.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Regime Start</strong></summary>\n    <p>Marks a contextual reset in market behavior or structure. It is useful for segmenting analysis and avoiding assumptions based on prior conditions.</p>\n  </details>\n")
+            f.write("  <details>\n    <summary><strong>Threat Line</strong></summary>\n    <p>A boundary representing elevated risk to the current pattern or bias. A breach of the threat line may invalidate the prevailing interpretation.</p>\n  </details>\n")
+
         f.write("  <p style='margin-top:20px;font-size:13px'>Repo: <a class='repo' href='https://github.com/tyoungg/substack'>tyoungg/substack</a></p>\n")
         f.write("</body>\n</html>\n")
     print(f"Gallery created successfully: {output_file}")
