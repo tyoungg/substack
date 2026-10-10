@@ -104,8 +104,8 @@ def main():
             valid_symbols = list(set(all_symbols_config.get("symbols", []) + [symbol]))
 
     # Generate HTML indices in docs folder
-    generate_html_file_list("charts", "docs/allcharts.html", exclude_str="weekly", page_title="substack-charts — All images", valid_symbols=valid_symbols)
-    generate_html_file_list("charts", "docs/weeklies.html", filter_str="weekly", page_title="substack-charts — Weekly images", valid_symbols=valid_symbols)
+    generate_html_file_list("charts", "docs/allcharts.html", exclude_str="weekly", page_title="substack-charts — Daily Technicals", valid_symbols=valid_symbols)
+    generate_html_file_list("charts", "docs/weeklies.html", filter_str="weekly", page_title="substack-charts — Weekly Technicals", valid_symbols=valid_symbols, include_explanations=True)
 
 if __name__ == "__main__":
     main()

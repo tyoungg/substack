@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset='utf-8' />
-  <title>substack-charts — Weekly images</title>
+  <title>substack-charts — Weekly Technicals</title>
   <meta name='viewport' content='width=device-width,initial-scale=1' />
   <style>
     body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 24px; background:#f7f7f7; color:#111 }
@@ -13,11 +13,37 @@
     .fname { font-size: 12px; color:#444; margin-top:6px; word-break:break-word; text-align:center; }
     .notice { color:#666; font-size:14px; margin-bottom:12px; }
     a.repo { font-size:13px }
-    a { text-decoration: none; color: inherit; }
+    a { text-decoration: none; color: #0066cc; }
+    .nav-links { margin-bottom: 12px; font-size: 14px; color: #444; }
+    .nav-links a { font-weight: 500; }
+    details {
+      margin-bottom: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    details[open] {
+      background: #f5f7fa;
+    }
+    details p {
+      margin: 0.5rem 0 0;
+      color: #333;
+    }
   </style>
 </head>
 <body>
-  <h1>substack-charts — Weekly images</h1>
+  <h1>substack-charts — Weekly Technicals</h1>
+  <div class='nav-links'>
+    <strong>Views:</strong>
+    <a href='index.html'>Daily Candlesticks</a> |
+    <a href='allcharts.html'>Daily Technicals</a> |
+    <a href='weeklies.html'>Weekly Technicals</a>
+  </div>
   <div class='notice'>This is a static gallery that embeds the images stored in the charts/ folder of this repository.</div>
   <div class='grid'>
     <div class="card">
@@ -144,6 +170,46 @@
       <a href="https://raw.githubusercontent.com/tyoungg/substack/main/charts/DX-Y.NYB_weekly_patterns.png" target="_blank"><img src="https://raw.githubusercontent.com/tyoungg/substack/main/charts/DX-Y.NYB_weekly_patterns.png" alt="US DOllar"></a>
       <div class="fname">US DOllar</div>
     </div>
+  </div>
+
+  <div class='patterns-explanation' style='margin-top:30px;'>
+    <h2>Detected Technical Indicators & Patterns</h2>
+    <details>
+      <summary><strong>Head and Shoulders</strong></summary>
+      <p>Identifies a chart formation that often signals a bullish-to-bearish trend reversal. It is commonly used to anticipate potential breakdowns after an extended uptrend.</p>
+    </details>
+    <details>
+      <summary><strong>Double Top and Double Bottom</strong></summary>
+      <p>Patterns that form when price tests the same level twice without breaking through. These often suggest exhaustion and a potential reversal at key support or resistance.</p>
+    </details>
+    <details>
+      <summary><strong>Triangles</strong></summary>
+      <p>Consolidation formations where price range contracts over time. Ascending, descending, and symmetrical triangles often precede volatility expansion.</p>
+    </details>
+    <details>
+      <summary><strong>Flags</strong></summary>
+      <p>Short-term continuation patterns that form after a sharp price move. They typically represent brief pauses before the prevailing trend resumes.</p>
+    </details>
+    <details>
+      <summary><strong>Cup and Handle</strong></summary>
+      <p>A bullish continuation pattern resembling a rounded base followed by shallow consolidation. It is often used to identify breakout opportunities within longer-term uptrends.</p>
+    </details>
+    <details>
+      <summary><strong>Price Channels / Channel</strong></summary>
+      <p>Two parallel trendlines that contain price movement within a controlled trend. Channels help visualize trend strength and potential support and resistance zones.</p>
+    </details>
+    <details>
+      <summary><strong>Undercut & Rally</strong></summary>
+      <p>An entry pattern where price briefly dips below a recent significant low before closing back above it, often confirmed by higher volume.</p>
+    </details>
+    <details>
+      <summary><strong>Regime Start</strong></summary>
+      <p>Marks a contextual reset in market behavior or price volatility structure, useful for segmenting analysis.</p>
+    </details>
+    <details>
+      <summary><strong>Threat Line</strong></summary>
+      <p>A short-term trendline connecting recent peaks (resistance) or troughs (support) representing key boundary levels for current trend bias.</p>
+    </details>
   </div>
   <p style='margin-top:20px;font-size:13px'>Repo: <a class='repo' href='https://github.com/tyoungg/substack'>tyoungg/substack</a></p>
 </body>

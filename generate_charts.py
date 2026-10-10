@@ -129,5 +129,5 @@ for symbol in symbols:
         )
 
 # Generate HTML indices in docs folder
-generate_html_file_list("charts", "docs/allcharts.html", exclude_str="weekly", page_title="substack-charts — All images", valid_symbols=symbols)
-generate_html_file_list("charts", "docs/weeklies.html", filter_str="weekly", page_title="substack-charts — Weekly images", valid_symbols=symbols)
+generate_html_file_list("charts", "docs/allcharts.html", exclude_str="weekly", page_title="substack-charts — Daily Technicals", valid_symbols=symbols)
+generate_html_file_list("charts", "docs/weeklies.html", filter_str="weekly", page_title="substack-charts — Weekly Technicals", valid_symbols=symbols, include_explanations=True)
