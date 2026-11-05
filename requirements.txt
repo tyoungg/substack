@@ -3,8 +3,8 @@ pandas
 numpy
 matplotlib
 mplfinance
+six
 pyyaml
 scipy
 scikit-learn
-matplotlib
 datetime
