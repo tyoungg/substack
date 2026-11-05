@@ -6,5 +6,6 @@ mplfinance
 pyyaml
 scipy
 scikit-learn
+six
 matplotlib
 datetime
